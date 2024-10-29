@@ -55,10 +55,11 @@ from ray.util.queue import Queue
 
 from ax.service.ax_client import AxClient
 
+from SDCWriter import SDCWriter
+from FastRouteWriter import FastRouteWriter
+
 DATE = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 ORFS_URL = "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts"
-FASTROUTE_TCL = "fastroute.tcl"
-CONSTRAINTS_SDC = "constraint.sdc"
 METRIC = "minimum"
 ERROR_METRIC = 9e99
 ORFS_FLOW_DIR = os.path.abspath(
@@ -404,18 +405,20 @@ def parse_config(config, path=os.getcwd()):
     Parse configuration received from tune into make variables.
     """
     options = ""
-    sdc = {}
-    fast_route = {}
+    sdc_variables = {}
+    fast_route_variables = {}
+    FASTROUTE_TCL = "fastroute.tcl"
+    CONSTRAINTS_SDC = "constraint.sdc"
     flow_variables = parse_flow_variables()
     for key, value in config.items():
         # Keys that begin with underscore need special handling.
         if key.startswith("_"):
             # Variables to be injected into fastroute.tcl
             if key.startswith("_FR_"):
-                fast_route[key.replace("_FR_", "", 1)] = value
+                fast_route_variables[key.replace("_FR_", "", 1)] = value
             # Variables to be injected into constraints.sdc
             elif key.startswith("_SDC_"):
-                sdc[key.replace("_SDC_", "", 1)] = value
+                sdc_variables[key.replace("_SDC_", "", 1)] = value
             # Special substitution cases
             elif key == "_PINS_DISTANCE":
                 options += f' PLACE_PINS_ARGS="-min_distance {value}"'
@@ -434,90 +437,14 @@ def parse_config(config, path=os.getcwd()):
             #     print(f"[ERROR TUN-0017] Variable {key} is not tunable.")
             #     sys.exit(1)
             options += f" {key}={value}"
-    if bool(sdc):
-        write_sdc(sdc, path)
-        options += f" SDC_FILE={path}/{CONSTRAINTS_SDC}"
-    if bool(fast_route):
-        write_fast_route(fast_route, path)
-        options += f" FASTROUTE_TCL={path}/{FASTROUTE_TCL}"
+    if bool(sdc_variables):
+        sdc_path = SDCWriter.write_file(SDC_ORIGINAL, sdc_variables, path,
+                                        CONSTRAINTS_SDC)
+        options += f" SDC_FILE={sdc_path}"
+    if bool(fast_route_variables):
+        fast_route_path = FastRouteWriter.write_file(FR_ORIGINAL, args.platform, fast_route_variables, path, FASTROUTE_TCL)
+        options += f" FASTROUTE_TCL={fast_route_path}"
     return options
-
-
-def write_sdc(variables, path):
-    """
-    Create a SDC file with parameters for current tuning iteration.
-    """
-    # Handle case where the reference file does not exist
-    if SDC_ORIGINAL == "":
-        print("[ERROR TUN-0020] No SDC reference file provided.")
-        sys.exit(1)
-    new_file = SDC_ORIGINAL
-    for key, value in variables.items():
-        if key == "CLK_PERIOD":
-            if new_file.find("set clk_period") != -1:
-                new_file = re.sub(
-                    r"set clk_period .*\n(.*)", f"set clk_period {value}\n\\1", new_file
-                )
-            else:
-                new_file = re.sub(
-                    r"-period [0-9\.]+ (.*)", f"-period {value} \\1", new_file
-                )
-                new_file = re.sub(r"-waveform [{}\s0-9\.]+[\s|\n]", "", new_file)
-        elif key == "UNCERTAINTY":
-            if new_file.find("set uncertainty") != -1:
-                new_file = re.sub(
-                    r"set uncertainty .*\n(.*)",
-                    f"set uncertainty {value}\n\\1",
-                    new_file,
-                )
-            else:
-                new_file += f"\nset uncertainty {value}\n"
-        elif key == "IO_DELAY":
-            if new_file.find("set io_delay") != -1:
-                new_file = re.sub(
-                    r"set io_delay .*\n(.*)", f"set io_delay {value}\n\\1", new_file
-                )
-            else:
-                new_file += f"\nset io_delay {value}\n"
-    file_name = path + f"/{CONSTRAINTS_SDC}"
-    with open(file_name, "w") as file:
-        file.write(new_file)
-    return file_name
-
-
-def write_fast_route(variables, path):
-    """
-    Create a FastRoute Tcl file with parameters for current tuning iteration.
-    """
-    # Handle case where the reference file does not exist (asap7 doesn't have reference)
-    if FR_ORIGINAL == "" and args.platform != "asap7":
-        print("[ERROR TUN-0021] No FastRoute Tcl reference file provided.")
-        sys.exit(1)
-    layer_cmd = "set_global_routing_layer_adjustment"
-    new_file = FR_ORIGINAL
-    for key, value in variables.items():
-        if key.startswith("LAYER_ADJUST"):
-            layer = key.lstrip("LAYER_ADJUST")
-            # If there is no suffix (i.e., layer name) apply adjust to all
-            # layers.
-            if layer == "":
-                new_file += "\nset_global_routing_layer_adjustment"
-                new_file += " $::env(MIN_ROUTING_LAYER)"
-                new_file += "-$::env(MAX_ROUTING_LAYER)"
-                new_file += f" {value}"
-            elif re.search(f"{layer_cmd}.*{layer}", new_file):
-                new_file = re.sub(
-                    f"({layer_cmd}.*{layer}).*\n(.*)", f"\\1 {value}\n\\2", new_file
-                )
-            else:
-                new_file += f"\n{layer_cmd} {layer} {value}\n"
-        elif key == "GR_SEED":
-            new_file += f"\nset_global_routing_random -seed {value}\n"
-    file_name = path + f"/{FASTROUTE_TCL}"
-    with open(file_name, "w") as file:
-        file.write(new_file)
-    return file_name
-
 
 def run_command(cmd, timeout=None, stderr_file=None, stdout_file=None, fail_fast=False):
     """
