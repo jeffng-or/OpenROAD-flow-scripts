@@ -944,6 +944,8 @@ if __name__ == "__main__":
     # need to upload the files.
     config_dict, SDC_ORIGINAL, FR_ORIGINAL = read_config(os.path.abspath(args.config))
 
+    # define runtime env so that local classes can be imported by remote workers
+    runtime_env = {"working_dir": os.path.abspath(os.path.dirname(__file__))}
     # Connect to remote Ray server if any, otherwise will run locally
     if args.server is not None:
         # At GCP we have a NFS folder that is present for all worker nodes.
@@ -957,7 +959,7 @@ if __name__ == "__main__":
             if args.git_latest:
                 LOCAL_DIR += "-or-latest"
         # Connect to ray server before first remote execution.
-        ray.init(f"ray://{args.server}:{args.port}")
+        ray.init(f"ray://{args.server}:{args.port}", runtime_env=runtime_env)
         # Remote functions return a task id and are non-blocking. Since we
         # need the setup repo before continuing, we call ray.get() to wait
         # for its completion.
@@ -973,6 +975,7 @@ if __name__ == "__main__":
         LOCAL_DIR = f"logs/{args.platform}/{args.design}"
         LOCAL_DIR = os.path.abspath(LOCAL_DIR)
         INSTALL_PATH = os.path.abspath("../tools/install")
+        ray.init(runtime_env=runtime_env)
 
     if args.mode == "tune":
         best_params = set_best_params(args.platform, args.design)
