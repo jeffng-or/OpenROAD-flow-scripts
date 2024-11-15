@@ -15,11 +15,10 @@ proc fast_route {} {
   }
 }
 
-# -hold_margin is only set when hold_margin is set, default 1
 proc repair_timing_helper { {hold_margin 1} } {
   set additional_args "-verbose"
   append_env_var additional_args SETUP_SLACK_MARGIN -setup_margin 1
-  if {$hold_margin} {
+  if {$hold_margin || $::env(HOLD_SLACK_MARGIN) < 0} {
     append_env_var additional_args HOLD_SLACK_MARGIN -hold_margin 1
   }
   append_env_var additional_args TNS_END_PERCENT -repair_tns 1
@@ -27,8 +26,21 @@ proc repair_timing_helper { {hold_margin 1} } {
   append_env_var additional_args SKIP_GATE_CLONING -skip_gate_cloning 0
   append_env_var additional_args SKIP_BUFFER_REMOVAL -skip_buffer_removal 0
   append_env_var additional_args SKIP_LAST_GASP -skip_last_gasp 0
+  append_env_var additional_args MATCH_CELL_FOOTPRINT -match_cell_footprint 0
   puts "repair_timing [join $additional_args " "]"
   repair_timing {*}$additional_args
+}
+
+proc repair_design_helper {} {
+  puts "Perform buffer insertion and gate resizing..."
+
+  set additional_args ""
+  append_env_var additional_args CAP_MARGIN -cap_margin 1
+  append_env_var additional_args SLEW_MARGIN -slew_margin 1
+  append_env_var additional_args MATCH_CELL_FOOTPRINT -match_cell_footprint 0
+  puts "repair_design [join $additional_args " "]"
+
+  repair_design {*}$additional_args
 }
 
 proc recover_power {} {
@@ -40,7 +52,10 @@ proc recover_power {} {
   report_tns
   report_wns
   report_power
-  repair_timing -recover_power $::env(RECOVER_POWER)
+  set additional_args ""
+  append_env_var additional_args RECOVER_POWER -recover_power 1
+  append_env_var additional_args MATCH_CELL_FOOTPRINT -match_cell_footprint 0
+  repair_timing {*}$additional_args
   report_tns
   report_wns
   report_power
@@ -136,3 +151,20 @@ proc erase_non_stage_variables {stage_name} {
 }
 
 set global_route_congestion_report $::env(REPORTS_DIR)/congestion.rpt
+
+proc place_density_with_lb_addon {} {
+  # check the lower boundary of the PLACE_DENSITY and add PLACE_DENSITY_LB_ADDON if it exists
+  if {[info exist ::env(PLACE_DENSITY_LB_ADDON)]} {
+    set place_density_lb [gpl::get_global_placement_uniform_density \
+    -pad_left $::env(CELL_PAD_IN_SITES_GLOBAL_PLACEMENT) \
+    -pad_right $::env(CELL_PAD_IN_SITES_GLOBAL_PLACEMENT)]
+    set place_density [expr $place_density_lb + ((1.0 - $place_density_lb) * $::env(PLACE_DENSITY_LB_ADDON)) + 0.01]
+    if {$place_density > 1.0} {
+      utl::error FLW 24 "Place density exceeds 1.0 (current PLACE_DENSITY_LB_ADDON = $::env(PLACE_DENSITY_LB_ADDON)). Please check if the value of PLACE_DENSITY_LB_ADDON is between 0 and 0.99."
+    }
+    puts "Placement density is $place_density, computed from PLACE_DENSITY_LB_ADDON $::env(PLACE_DENSITY_LB_ADDON) and lower bound $place_density_lb"
+  } else {
+    set place_density $::env(PLACE_DENSITY)
+  }
+  return $place_density
+}
