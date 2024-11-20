@@ -55,6 +55,8 @@ from ray.util.queue import Queue
 
 from ax.service.ax_client import AxClient
 
+from ParamConfigReader import ParamConfigReader
+
 DATE = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 ORFS_URL = "https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts"
 FASTROUTE_TCL = "fastroute.tcl"
@@ -853,7 +855,7 @@ if __name__ == "__main__":
 
     # Read config and original files before handling where to run in case we
     # need to upload the files.
-    config_dict, SDC_ORIGINAL, FR_ORIGINAL = ParamConfigReader.read_config(os.path.abspath(args.config), args.mode, args.algorithm)
+    config_dict, SDC_ORIGINAL, FR_ORIGINAL = ParamConfigReader.read_config_file(os.path.abspath(args.config), args.mode, args.algorithm)
 
     # define runtime env so that local classes can be imported by remote workers
     runtime_env = {"working_dir": os.path.abspath(os.path.dirname(__file__))}
