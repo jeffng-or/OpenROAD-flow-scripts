@@ -1,0 +1,28 @@
+{
+    "best_result": "bogus",
+    "_SDC_FILE_PATH": "simple.sdc",
+    "_SDC_CLK_PERIOD": {
+        "type": "float",
+        "minmax": [
+            14.0,
+            16.0
+        ],
+        "step": 0
+    },
+    "CORE_MARGIN": {
+        "type": "int",
+        "minmax": [
+            2,
+            2
+        ],
+        "step": 0
+    },
+    "_FR_FILE_PATH": "simple_fastroute.tcl",
+    "_FR_GR_OVERFLOW": {
+        "type": "int",
+        "minmax": [
+            1,
+            1
+        ],
+        "step": 0
+    }

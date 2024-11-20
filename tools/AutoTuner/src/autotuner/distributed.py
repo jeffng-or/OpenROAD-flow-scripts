@@ -198,168 +198,6 @@ class PPAImprov(AutoTunerBase):
         score = ppa * (self.step_ / 100) ** (-1) + (gamma * metrics["num_drc"])
         return score
 
-
-def read_config(file_name):
-    """
-    Please consider inclusive, exclusive
-    Most type uses [min, max)
-    But, Quantization makes the upper bound inclusive.
-    e.g., qrandint and qlograndint uses [min, max]
-    step value is used for quantized type (e.g., quniform). Otherwise, write 0.
-    When min==max, it means the constant value
-    """
-
-    def read(path):
-        # if file path does not exist, return empty string
-        print(os.path.abspath(path))
-        if not os.path.isfile(os.path.abspath(path)):
-            return ""
-        with open(os.path.abspath(path), "r") as file:
-            ret = file.read()
-        return ret
-
-    def read_sweep(this):
-        return [*this["minmax"], this["step"]]
-
-    def apply_condition(config, data):
-        # TODO: tune.sample_from only supports random search algorithm.
-        # To make conditional parameter for the other algorithms, different
-        # algorithms should take different methods (will be added)
-        if args.algorithm != "random":
-            return config
-        dp_pad_min = data["CELL_PAD_IN_SITES_DETAIL_PLACEMENT"]["minmax"][0]
-        dp_pad_step = data["CELL_PAD_IN_SITES_DETAIL_PLACEMENT"]["step"]
-        if dp_pad_step == 1:
-            config["CELL_PAD_IN_SITES_DETAIL_PLACEMENT"] = tune.sample_from(
-                lambda spec: np.random.randint(
-                    dp_pad_min, spec.config.CELL_PAD_IN_SITES_GLOBAL_PLACEMENT + 1
-                )
-            )
-        if dp_pad_step > 1:
-            config["CELL_PAD_IN_SITES_DETAIL_PLACEMENT"] = tune.sample_from(
-                lambda spec: random.randrange(
-                    dp_pad_min,
-                    spec.config.CELL_PAD_IN_SITES_GLOBAL_PLACEMENT + 1,
-                    dp_pad_step,
-                )
-            )
-        return config
-
-    def read_tune(this):
-        min_, max_ = this["minmax"]
-        if min_ == max_:
-            # Returning a choice of a single element allow pbt algorithm to
-            # work. pbt does not accept single values as tunable.
-            return tune.choice([min_, max_])
-        if this["type"] == "int":
-            if this["step"] == 1:
-                return tune.randint(min_, max_)
-            return tune.choice(np.ndarray.tolist(np.arange(min_, max_, this["step"])))
-        if this["type"] == "float":
-            if this["step"] == 0:
-                return tune.uniform(min_, max_)
-            return tune.choice(np.ndarray.tolist(np.arange(min_, max_, this["step"])))
-        return None
-
-    def read_tune_ax(name, this):
-        """
-        Ax format: https://ax.dev/versions/0.3.7/api/service.html
-        """
-        dict_ = dict(name=name)
-        if "minmax" not in this:
-            return None
-        min_, max_ = this["minmax"]
-        if min_ == max_:
-            dict_["type"] = "fixed"
-            dict_["value"] = min_
-        elif this["type"] == "int":
-            if this["step"] == 1:
-                dict_["type"] = "range"
-                dict_["bounds"] = [min_, max_]
-                dict_["value_type"] = "int"
-            else:
-                dict_["type"] = "choice"
-                dict_["values"] = tune.randint(min_, max_, this["step"])
-                dict_["value_type"] = "int"
-        elif this["type"] == "float":
-            if this["step"] == 1:
-                dict_["type"] = "choice"
-                dict_["values"] = tune.choice(
-                    np.ndarray.tolist(np.arange(min_, max_, this["step"]))
-                )
-                dict_["value_type"] = "float"
-            else:
-                dict_["type"] = "range"
-                dict_["bounds"] = [min_, max_]
-                dict_["value_type"] = "float"
-        return dict_
-
-    def read_tune_pbt(name, this):
-        """
-        PBT format: https://docs.ray.io/en/releases-2.9.3/tune/examples/pbt_guide.html
-        Note that PBT does not support step values.
-        """
-        if "minmax" not in this:
-            return None
-        min_, max_ = this["minmax"]
-        if min_ == max_:
-            return ray.tune.choice([min_, max_])
-        if this["type"] == "int":
-            return ray.tune.randint(min_, max_)
-        if this["type"] == "float":
-            return ray.tune.uniform(min_, max_)
-
-    # Check file exists and whether it is a valid JSON file.
-    assert os.path.isfile(file_name), f"File {file_name} not found."
-    try:
-        with open(file_name) as file:
-            data = json.load(file)
-    except json.JSONDecodeError:
-        raise ValueError(f"Invalid JSON file: {file_name}")
-    sdc_file = ""
-    fr_file = ""
-    if args.mode == "tune" and args.algorithm == "ax":
-        config = list()
-    else:
-        config = dict()
-    for key, value in data.items():
-        if key == "best_result":
-            continue
-        if key == "_SDC_FILE_PATH" and value != "":
-            if sdc_file != "":
-                print("[WARNING TUN-0004] Overwriting SDC base file.")
-            sdc_file = read(f"{os.path.dirname(file_name)}/{value}")
-            continue
-        if key == "_FR_FILE_PATH" and value != "":
-            if fr_file != "":
-                print("[WARNING TUN-0005] Overwriting FastRoute base file.")
-            fr_file = read(f"{os.path.dirname(file_name)}/{value}")
-            continue
-        if not isinstance(value, dict):
-            # To take care of empty values like _FR_FILE_PATH
-            if args.mode == "tune" and args.algorithm == "ax":
-                param_dict = read_tune_ax(key, value)
-                if param_dict:
-                    config.append(param_dict)
-            elif args.mode == "tune" and args.algorithm == "pbt":
-                param_dict = read_tune_pbt(key, value)
-                if param_dict:
-                    config[key] = param_dict
-            else:
-                config[key] = value
-        elif args.mode == "sweep":
-            config[key] = read_sweep(value)
-        elif args.mode == "tune" and args.algorithm == "ax":
-            config.append(read_tune_ax(key, value))
-        elif args.mode == "tune" and args.algorithm == "pbt":
-            config[key] = read_tune_pbt(key, value)
-        elif args.mode == "tune":
-            config[key] = read_tune(value)
-    if args.mode == "tune":
-        config = apply_condition(config, data)
-    return config, sdc_file, fr_file
-
-
 def parse_flow_variables():
     """
     Parse the flow variables from source
@@ -1015,8 +853,10 @@ if __name__ == "__main__":
 
     # Read config and original files before handling where to run in case we
     # need to upload the files.
-    config_dict, SDC_ORIGINAL, FR_ORIGINAL = read_config(os.path.abspath(args.config))
+    config_dict, SDC_ORIGINAL, FR_ORIGINAL = ParamConfigReader.read_config(os.path.abspath(args.config), args.mode, args.algorithm)
 
+    # define runtime env so that local classes can be imported by remote workers
+    runtime_env = {"working_dir": os.path.abspath(os.path.dirname(__file__))}
     # Connect to remote Ray server if any, otherwise will run locally
     if args.server is not None:
         # At GCP we have a NFS folder that is present for all worker nodes.
@@ -1030,7 +870,7 @@ if __name__ == "__main__":
             if args.git_latest:
                 LOCAL_DIR += "-or-latest"
         # Connect to ray server before first remote execution.
-        ray.init(f"ray://{args.server}:{args.port}")
+        ray.init(f"ray://{args.server}:{args.port}", runtime_env=runtime_env)
         # Remote functions return a task id and are non-blocking. Since we
         # need the setup repo before continuing, we call ray.get() to wait
         # for its completion.
@@ -1046,7 +886,8 @@ if __name__ == "__main__":
         LOCAL_DIR = f"logs/{args.platform}/{args.design}"
         LOCAL_DIR = os.path.abspath(LOCAL_DIR)
         INSTALL_PATH = os.path.abspath("../tools/install")
-
+        ray.init(runtime_env=runtime_env)
+        
     if args.mode == "tune":
         best_params = set_best_params(args.platform, args.design)
         search_algo = set_algorithm(args.experiment, config_dict)
