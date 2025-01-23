@@ -11,7 +11,7 @@ export SDC_FILE      = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/constraint.
 export DIE_AREA   = 0 0 2920 3520
 export CORE_AREA  = 10 10 2910 3510
 
-export PLACE_DENSITY ?= 0.23
+export PLACE_DENSITY ?= 0.2
 
 export microwatt_DIR = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)
 
@@ -32,6 +32,9 @@ export CTS_BUF_DISTANCE = 600
 export SKIP_GATE_CLONING = 1
 
 export SETUP_SLACK_MARGIN = 0.2
+
+# GRT non-default config
+export FASTROUTE_TCL = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/fastroute.tcl
 
 # This is high, some SRAMs should probably be converted
 # to real SRAMs and not instantiated as flops

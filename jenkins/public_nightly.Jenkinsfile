@@ -1,4 +1,4 @@
-@Library('utils@orfs-v2.2.2') _
+@Library('utils@orfs-v2.2.4') _
 
 node {
 
@@ -64,6 +64,8 @@ node {
     }
 
     stage ('Cleanup and Reporting') {
+        env.CHANGE_BRANCH = 'nightly'
+        env.BRANCH_NAME = 'nightly'
         finalReport(DOCKER_IMAGE);
     }
 
