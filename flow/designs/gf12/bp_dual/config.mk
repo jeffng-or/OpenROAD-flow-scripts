@@ -15,9 +15,9 @@ export RTLMP_FENCE_LY ?= 700
 export RTLMP_FENCE_UX ?= 2450
 export RTLMP_FENCE_UY ?= 2300
 
+export SYNTH_NETLIST_FILES = $(PLATFORM_DIR)/bp/bsg_ac_black_parrot_dual_core_v0/yosys/bp_dual_hier_yosys_netlist.v
 export VERILOG_FILES = $(PLATFORM_DIR)/bp/bsg_ac_black_parrot_dual_core_v0/bsg_chip.sv2v.v \
                        $(PLATFORM_DIR)/bp/IN12LP_GPIO18_13M9S30P.blackbox.v
-export SYNTH_NETLIST_FILES = $(PLATFORM_DIR)/bp/bsg_ac_black_parrot_dual_core_v0/yosys/bp_dual_hier_yosys_netlist.v
 
 export SDC_FILE      = $(PLATFORM_DIR)/bp/bsg_ac_black_parrot_dual_core_v0/bsg_chip.elab.v.sdc
 
@@ -59,7 +59,7 @@ export CORE_AREA = 200 200 2800 2800
 export ABC_CLOCK_PERIOD_IN_PS = 1250
 
 export TNS_END_PERCENT = 0
-export PLACE_DENSITY = 0.55
+export PLACE_DENSITY = 0.50
 
 export MACRO_WRAPPERS = $(PLATFORM_DIR)/bp/wrappers/wrappers.tcl
 
