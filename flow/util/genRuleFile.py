@@ -2,100 +2,39 @@
 
 from math import ceil, isinf
 from os import chdir, getcwd
-from os.path import isfile, abspath
+from os.path import isfile
 from re import sub
 import argparse
 import json
 import operator
+import os
 import sys
-import requests
 
 
-def get_golden(platform, design, api_base_url):
-    try:
-        response = requests.get(
-            api_base_url + f"/golden?platform={platform}&design={design}&variant=base"
-        )
+def gen_rule_file(
+    rules_file,
+    new_rules_file,
+    update,
+    tighten,
+    failing,
+    variant,
+    metrics_file=None,
+    metrics_to_consider=[],
+):
+    print(f"{os.path.normpath(rules_file)} updates:")
 
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200 and "error" not in response.json():
-            # Parse the JSON response
-            data = response.json()
+    with open(metrics_file, "r") as f:
+        metrics = json.load(f)
+    if not isinstance(metrics, dict):
+        print(f"[ERROR] Invalid format for reference metrics {metrics_file}")
+        sys.exit(1)
 
-            return data, None
-        else:
-            print("API request failed")
-            return None, "API request failed"
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return None, f"An error occurred: {str(e)}"
-
-
-def get_metrics(commitSHA, platform, design, api_base_url):
-    try:
-        response = requests.get(
-            api_base_url
-            + f"/commit?commitSHA={commitSHA}&platform={platform}&design={design}&variant=base"
-        )
-
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200 and "error" not in response.json():
-            # Parse the JSON response
-            data = response.json()
-
-            return data, None
-        else:
-            print("API request failed")
-            return None, "API request failed"
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        return None, f"An error occurred: {str(e)}"
-
-
-def update_rules(designDir, variant, golden_metrics, overwrite):
-    if overwrite:
-        gen_rule_file(
-            designDir,  # design directory
-            True,  # update
-            False,  # tighten
-            False,  # failing
-            variant,  # variant
-            golden_metrics,  # metrics needed for update, default is {} in case of file
-        )
-    else:
-        gen_rule_file(
-            designDir,  # design directory
-            False,  # update
-            True,  # tighten
-            False,  # failing
-            variant,  # variant
-            golden_metrics,  # metrics needed for update, default is {} in case of file
-        )
-
-
-def gen_rule_file(design_dir, update, tighten, failing, variant, golden_metrics={}):
-    original_directory = getcwd()
-    chdir(design_dir)
-
-    metrics_file = f"metadata-{variant}-ok.json"
-    rules_file = f"rules-{variant}.json"
     rules = dict()
-
-    if golden_metrics == {}:
-        if isfile(metrics_file):
-            with open(metrics_file, "r") as f:
-                metrics = json.load(f)
-        else:
-            print(f"[ERROR] File not found {abspath(metrics_file)}")
-            sys.exit(1)
-    else:
-        metrics = golden_metrics
-
     if isfile(rules_file):
         with open(rules_file, "r") as f:
             OLD_RULES = json.load(f)
     else:
-        print(f"[WARNING] File not found {abspath(rules_file)}")
+        print(f"[WARNING] No old rules file found {rules_file}")
         OLD_RULES = None
 
     # dict format
@@ -156,7 +95,7 @@ def gen_rule_file(design_dir, update, tighten, failing, variant, golden_metrics=
         # route
         "globalroute__antenna_diodes_count": {
             "mode": "padding",
-            "padding": 35,
+            "padding": 50,
             "round_value": True,
             "compare": "<=",
         },
@@ -179,7 +118,7 @@ def gen_rule_file(design_dir, update, tighten, failing, variant, golden_metrics=
         },
         "detailedroute__antenna_diodes_count": {
             "mode": "padding",
-            "padding": 35,
+            "padding": 50,
             "min_max": max,
             "min_max_direct": 5,
             "round_value": True,
@@ -244,10 +183,7 @@ def gen_rule_file(design_dir, update, tighten, failing, variant, golden_metrics=
     change_str = ""
     for field, option in rules_dict.items():
         if field not in metrics.keys():
-            print(
-                f"[ERROR] Metric {field} not found in "
-                f"metrics file: {metrics_file} or golden metrics."
-            )
+            print(f"[ERROR] Metric {field} not found")
             sys.exit(1)
 
         if isinstance(metrics[field], str):
@@ -307,7 +243,17 @@ def gen_rule_file(design_dir, update, tighten, failing, variant, golden_metrics=
         else:
             rule_value = ceil(rule_value * 100) / 100.0
 
-        if OLD_RULES is not None and field in OLD_RULES.keys():
+        preserve_old_rule = (
+            True
+            if len(metrics_to_consider) > 0 and field not in metrics_to_consider
+            else False
+        )
+        has_old_rule = OLD_RULES is not None and field in OLD_RULES.keys()
+
+        if has_old_rule and preserve_old_rule:
+            rule_value = OLD_RULES[field]["value"]
+
+        if has_old_rule and not preserve_old_rule:
             old_rule = OLD_RULES[field]
             if old_rule["compare"] != option["compare"]:
                 print("[WARNING] Compare operator changed since last update.")
@@ -321,30 +267,30 @@ def gen_rule_file(design_dir, update, tighten, failing, variant, golden_metrics=
                 else:
                     rule_value = ceil(rule_value * 100) / 100.0
 
-            UPDATE = False
+            need_to_update = False
             if (
                 tighten
                 and rule_value != old_rule["value"]
                 and compare(rule_value, old_rule["value"])
             ):
-                UPDATE = True
+                need_to_update = True
                 change_str += format_str.format(
                     field, old_rule["value"], rule_value, "Tighten"
                 )
 
             if failing and not compare(metrics[field], old_rule["value"]):
-                UPDATE = True
+                need_to_update = True
                 change_str += format_str.format(
                     field, old_rule["value"], rule_value, "Failing"
                 )
 
             if update and old_rule["value"] != rule_value:
-                UPDATE = True
+                need_to_update = True
                 change_str += format_str.format(
                     field, old_rule["value"], rule_value, "Updating"
                 )
 
-            if not UPDATE:
+            if not need_to_update:
                 rule_value = old_rule["value"]
 
         rules[field] = dict(value=rule_value, compare=option["compare"])
@@ -354,18 +300,20 @@ def gen_rule_file(design_dir, update, tighten, failing, variant, golden_metrics=
         print(format_str.format("------", "---", "---", "----"), end="")
         print(change_str)
 
-    with open(rules_file, "w") as f:
-        print("[INFO] writing", abspath(rules_file))
+    with open(new_rules_file, "w") as f:
         json.dump(rules, f, indent=4)
 
-    chdir(original_directory)
+
+def comma_separated_list(value):
+    if value is None or value == "all":
+        return []
+    return [item.strip() for item in value.split(",")]
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generates or updates rules file for CI."
     )
-    parser.add_argument("dir", help="Path to the design directory.")
     parser.add_argument(
         "-v", "--variant", default="base", help='Flow variant [default="base"].'
     )
@@ -390,6 +338,32 @@ if __name__ == "__main__":
         default=False,
         help="Update failing rules.",
     )
+    parser.add_argument(
+        "-r",
+        "--reference",
+        type=str,
+        default=None,
+        help="Reference metadata file.",
+    )
+    parser.add_argument(
+        "--rules",
+        type=str,
+        default=None,
+        help="Rules input file.",
+    )
+    parser.add_argument(
+        "--new-rules",
+        type=str,
+        default=None,
+        help="Rules output file.",
+    )
+    parser.add_argument(
+        "-m",
+        "--metrics",
+        type=comma_separated_list,
+        default="all",
+        help="Only consider the following metrics to change. [default=all]",
+    )
     args = parser.parse_args()
 
     if not args.update and not args.tighten and not args.failing:
@@ -400,4 +374,13 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
-    gen_rule_file(args.dir, args.update, args.tighten, args.failing, args.variant)
+    gen_rule_file(
+        args.rules,
+        args.new_rules,
+        args.update,
+        args.tighten,
+        args.failing,
+        args.variant,
+        args.reference,
+        args.metrics,
+    )

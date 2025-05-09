@@ -3,65 +3,83 @@ yosys -import
 source $::env(SCRIPTS_DIR)/util.tcl
 erase_non_stage_variables synth
 
-if {[env_var_exists_and_non_empty CACHED_NETLIST]} {
-  log_cmd exec cp $::env(CACHED_NETLIST) $::env(RESULTS_DIR)/1_1_yosys.v
-  log_cmd exec cp $::env(SDC_FILE) $::env(RESULTS_DIR)/1_synth.sdc
+# If using a cached, gate level netlist, then copy over to the results dir with
+# preserve timestamps flag set. If you don't, subsequent runs will cause the
+# floorplan step to be re-executed.
+if {[env_var_exists_and_non_empty SYNTH_NETLIST_FILES]} {
+  if {[llength $::env(SYNTH_NETLIST_FILES)] == 1} {
+    log_cmd exec cp -p $::env(SYNTH_NETLIST_FILES) $::env(RESULTS_DIR)/1_1_yosys.v
+  } else {
+    # The date should be the most recent date of the files, but to
+    # keep things simple we just use the creation date
+    log_cmd exec cat {*}$::env(SYNTH_NETLIST_FILES) > $::env(RESULTS_DIR)/1_1_yosys.v
+  }
+  log_cmd exec cp -p $::env(SDC_FILE) $::env(RESULTS_DIR)/1_synth.sdc
   if {[env_var_exists_and_non_empty CACHED_REPORTS]} {
-    log_cmd exec cp {*}$::env(CACHED_REPORTS) $::env(REPORTS_DIR)/.
+    log_cmd exec cp -p {*}$::env(CACHED_REPORTS) $::env(REPORTS_DIR)/.
   }
   exit
 }
 
-# Setup verilog include directories
-set vIdirsArgs ""
-if {[env_var_exists_and_non_empty VERILOG_INCLUDE_DIRS]} {
-  foreach dir $::env(VERILOG_INCLUDE_DIRS) {
-    lappend vIdirsArgs "-I$dir"
-  }
-  set vIdirsArgs [join $vIdirsArgs]
-}
-
-
-# Read verilog files
-foreach file $::env(VERILOG_FILES) {
-  if {[file extension $file] == ".rtlil"} {
-    read_rtlil $file
-  } elseif {[file extension $file] == ".json"} {
+proc read_checkpoint {file} {
+  # We are reading a Yosys checkpoint
+  if {[file extension $file] == ".json"} {
     read_json $file
   } else {
-    read_verilog -defer -sv {*}$vIdirsArgs $file
+    read_rtlil $file
+  }  
+}
+
+proc read_design_sources {} {
+  # We are reading Verilog sources
+  source $::env(SCRIPTS_DIR)/synth_stdcells.tcl
+
+  # Setup verilog include directories
+  set vIdirsArgs ""
+  if {[env_var_exists_and_non_empty VERILOG_INCLUDE_DIRS]} {
+    foreach dir $::env(VERILOG_INCLUDE_DIRS) {
+      lappend vIdirsArgs "-I$dir"
+    }
+    set vIdirsArgs [join $vIdirsArgs]
   }
-}
 
-
-
-
-# Read standard cells and macros as blackbox inputs
-# These libs have their dont_use properties set accordingly
-read_liberty -overwrite -setattr liberty_cell -lib {*}$::env(DONT_USE_LIBS)
-read_liberty -overwrite -setattr liberty_cell \
-  -unit_delay -wb -ignore_miss_func -ignore_buses {*}$::env(DONT_USE_LIBS)
-
-# Apply toplevel parameters (if exist)
-if {[env_var_exists_and_non_empty VERILOG_TOP_PARAMS]} {
-  dict for {key value} $::env(VERILOG_TOP_PARAMS) {
-    chparam -set $key $value $::env(DESIGN_NAME)
+  if {[env_var_equals SYNTH_HDL_FRONTEND slang]} {
+    # slang requires all files at once
+    plugin -i slang
+    yosys read_slang -D SYNTHESIS --keep-hierarchy --compat=vcs \
+      --ignore-assertions --top $::env(DESIGN_NAME) \
+      {*}$vIdirsArgs {*}$::env(VERILOG_FILES) {*}$::env(VERILOG_DEFINES)
+    # Workaround for yosys-slang#119
+    setattr -unset init
+  } elseif {[env_var_equals SYNTH_HDL_FRONTEND verific]} {
+    if {[env_var_exists_and_non_empty VERILOG_INCLUDE_DIRS]} {
+	verific -vlog-incdir {*}$::env(VERILOG_INCLUDE_DIRS)
+    }
+    if {[env_var_exists_and_non_empty VERILOG_DEFINES]} {
+	verific -vlog-define {*}$::env(VERILOG_DEFINES)
+    }
+    verific -sv2012 {*}$::env(VERILOG_FILES)
+  } elseif {![env_var_exists_and_non_empty SYNTH_HDL_FRONTEND]} {
+    verilog_defaults -push
+    verilog_defaults -add {*}$::env(VERILOG_DEFINES)
+    foreach file $::env(VERILOG_FILES) {
+      read_verilog -defer -sv {*}$vIdirsArgs $file
+    }
+    verilog_defaults -pop
+  } else {
+    error "Unrecognized HDL frontend: $::env(SYNTH_HDL_FRONTEND)" 
   }
-}
 
-# Read platform specific mapfile for OPENROAD_CLKGATE cells
-if {[env_var_exists_and_non_empty CLKGATE_MAP_FILE]} {
-  read_verilog -defer $::env(CLKGATE_MAP_FILE)
-}
+  # Read platform specific mapfile for OPENROAD_CLKGATE cells
+  if {[env_var_exists_and_non_empty CLKGATE_MAP_FILE]} {
+    read_verilog -defer $::env(CLKGATE_MAP_FILE)
+  }
 
-# Mark modules to keep from getting removed in flattening
-if {[env_var_exists_and_non_empty PRESERVE_CELLS]} {
-  # Expand hierarchy since verilog was read in with -defer
-  hierarchy -check -top $::env(DESIGN_NAME)
-  foreach cell $::env(PRESERVE_CELLS) {
-    select -module $cell
-    setattr -mod -set keep_hierarchy 1
-    select -clear
+  if {[env_var_exists_and_non_empty SYNTH_BLACKBOXES]} {
+    hierarchy -check -top $::env(DESIGN_NAME)
+    foreach m $::env(SYNTH_BLACKBOXES) {
+      blackbox $m
+    }
   }
 }
 
