@@ -123,6 +123,7 @@ export VERILOG_FILES          = $(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/core/cvfpu
 	$(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/core/pmp/src/pmp_entry.sv \
 	$(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/core/pmp/src/pmp_data_if.sv \
 	$(PLATFORM_DIR)/verilog/fakeram7_256x32.sv \
+	$(PLATFORM_DIR)/verilog/fakeram_256x64.sv \
 	$(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/common/local/util/tc_sram_wrapper.sv \
 	$(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/vendor/pulp-platform/tech_cells_generic/src/rtl/tc_sram.sv \
 	$(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/common/local/util/sram.sv \
@@ -177,9 +178,11 @@ export VERILOG_INCLUDE_DIRS = $(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/core/include
 
 export VERILOG_DEFINES += -D HPDCACHE_ASSERT_OFF
 
-export ADDITIONAL_LEFS = $(PLATFORM_DIR)/lef/fakeram7_256x32.lef
+export ADDITIONAL_LEFS = $(PLATFORM_DIR)/lef/fakeram7_256x32.lef \
+			 $(PLATFORM_DIR)/lef/fakeram_256x64.lef
 
-export ADDITIONAL_LIBS = $(PLATFORM_DIR)/lib/NLDM/fakeram7_256x32.lib
+export ADDITIONAL_LIBS = $(PLATFORM_DIR)/lib/NLDM/fakeram7_256x32.lib \
+			 $(PLATFORM_DIR)/lib/NLDM/fakeram_256x64.lib
 
 export SDC_FILE               = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NAME)/constraint.sdc
 
