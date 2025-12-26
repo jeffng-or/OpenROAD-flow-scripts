@@ -6,7 +6,7 @@ if { ![grt::have_routes] } {
         in DRC viewer to view congestion"
 }
 
-if { [env_var_equals SKIP_DETAILED_ROUTE 1] } {
+if { $::env(SKIP_DETAILED_ROUTE) } {
   write_db $::env(RESULTS_DIR)/5_2_route.odb
   exit
 }
@@ -53,7 +53,7 @@ set all_args [concat [list \
 log_cmd detailed_route {*}$all_args
 
 if {
-  ![env_var_equals SKIP_ANTENNA_REPAIR_POST_DRT 1] &&
+  !$::env(SKIP_ANTENNA_REPAIR_POST_DRT) &&
   [env_var_exists_and_non_empty MAX_REPAIR_ANTENNAS_ITER_DRT]
 } {
   set repair_antennas_iters 1
@@ -76,5 +76,7 @@ check_antennas -report_file $env(REPORTS_DIR)/drt_antennas.log
 if { ![design_is_routed] } {
   error "Design has unrouted nets."
 }
+
+report_metrics 5 "detailed route"
 
 write_db $::env(RESULTS_DIR)/5_2_route.odb

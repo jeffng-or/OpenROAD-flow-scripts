@@ -5,16 +5,18 @@ load_design 3_2_place_iop.odb 2_floorplan.sdc
 
 set_dont_use $::env(DONT_USE_CELLS)
 
-remove_buffers
+if { $::env(GPL_TIMING_DRIVEN) } {
+  remove_buffers
+}
 
 # Do not buffer chip-level designs
 # by default, IO ports will be buffered
 # to not buffer IO ports, set environment variable
 # DONT_BUFFER_PORT = 1
 if { ![env_var_exists_and_non_empty FOOTPRINT] } {
-  if { ![env_var_equals DONT_BUFFER_PORTS 1] } {
+  if { !$::env(DONT_BUFFER_PORTS) } {
     puts "Perform port buffering..."
-    buffer_ports
+    buffer_ports {*}[env_var_or_empty BUFFER_PORTS_ARGS]
   }
 }
 
@@ -50,7 +52,7 @@ if { $result != 0 } {
 
 estimate_parasitics -placement
 
-if { [env_var_equals CLUSTER_FLOPS 1] } {
+if { $::env(CLUSTER_FLOPS) } {
   cluster_flops
   estimate_parasitics -placement
 }

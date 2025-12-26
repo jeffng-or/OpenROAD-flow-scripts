@@ -30,6 +30,7 @@ TNS_END_PERCENT:
     will always be fixed.
   default: 100
   stages:
+    - place
     - cts
     - floorplan
     - grt
@@ -127,6 +128,7 @@ SKIP_REPORT_METRICS:
     - grt
     - route
     - final
+  default: 0
 PROCESS:
   description: |
     Technology node or process in use.
@@ -162,6 +164,7 @@ SYNTH_GUT:
     instance.
   stages:
     - synth
+  default: 0
 SYNTH_HIERARCHICAL:
   description: |
     Enable to Synthesis hierarchically, otherwise considered flat synthesis.
@@ -171,7 +174,68 @@ SYNTH_HIERARCHICAL:
 SYNTH_MEMORY_MAX_BITS:
   description: >
     Maximum number of bits for memory synthesis.
+
+    Ideally, real RAM or realistic fakeram should be used for RAMs
+    much larger than 1024 bits.
+
+    To temporarily ignore the RAM concerns and investigate other
+    aspects of the design, consider setting `SYNTH_MOCK_LARGE_MEMORIES=1`,
+    or adjusting `SYNTH_MEMORY_MAX_BITS`.
   default: 4096
+  stages:
+    - synth
+SYNTH_MOCK_LARGE_MEMORIES:
+  description: >
+    Reduce Yosys inferred memories larger than SYNTH_MEMORY_MAX_BITS to 1 row.
+
+    Yosys will generally infer memories from behavioral Verilog code, whether
+    the memories are in standalone modules or instantiated within some
+    larger module.
+
+    fakeram and empty Verilog memories(blackboxes) of memories will not
+    be inferred memories by Yosys and are therefore not affected by
+    this variable.
+
+    This is useful and convenient to separate the concern of instantiating
+    and placing memories from investigating other issues with a design,
+    though it comes at the expense of the increased accuracy that using
+    realistic fakemem would provide.
+
+    Memories with a single 1 row will of course have unrealistically good
+    timing and area characteristics, but timing will still correctly terminate
+    in a register.
+
+    Large port memories, typically register files, will still have the
+    retain a lot of the port logic that can be useful to investigate issues.
+
+    This can be especially useful during development of designs where the
+    behavioral model comes first and suitable memories are matched up
+    when the design RTL is stable.
+
+    A typical use case would be Chisel which will generate a behavioral model
+    for a memories with the required clocks, ports, etc. in addition to a
+    computer readable file with the specification of the memories that
+    is used to
+    [automatically](https://chipyard.readthedocs.io/en/stable/Tools/Barstools.html/)
+    match up suitable memory macros later in the flow.
+
+    During an architectural screening study, a large range of memory
+    configurations can be investigated quickly with this option,
+    without getting bogged down in the concern of how to realize the
+    memories in silicon for emphemral RTL configurations that exist
+    only long enough to run through the ORFS flow to create a table
+    of some characteristics of a design configuration.
+  default: 0
+  stages:
+    - synth
+SYNTH_KEEP_MOCKED_MEMORIES:
+  description: >
+    When `SYNTH_MOCK_LARGE_MEMORIES=1`, setting this to 1,
+    will keep mocked memories (not flattening them).
+
+    This preserves some of the access logic complexity and
+    avoids optimizations outside of the mocked memory.
+  default: 1
   stages:
     - synth
 SYNTH_HDL_FRONTEND:
@@ -181,6 +245,12 @@ SYNTH_HDL_FRONTEND:
     command.
   stages:
     - synth
+SYNTH_SLANG_ARGS:
+  description: >
+    Additional arguments passed to the slang frontend during synthesis.
+  stages:
+    - synth
+  default: ""
 SYNTH_BLACKBOXES:
   description: >
     List of cells treated as a black box by Yosys. With Bazel, this can be used
@@ -297,29 +367,40 @@ SYNTH_WRAPPED_OPERATORS:
     design. These options are available for switching among in later stages of
     the flow.
   stages:
+    - All stages
+SYNTH_WRAPPED_ADDERS:
+  description: >
+    Specify the adder modules that can be used for synthesis, separated by commas.
+    The default adder module is determined by the first element of this variable.
+  stages:
     - synth
-    - floorplan
-    - place
-    - cts
-    - grt
-    - route
-    - final
+SYNTH_WRAPPED_MULTIPLIERS:
+  description: >
+    Specify the multiplier modules that can be used for synthesis, separated by commas.
+    The default multiplier module is determined by the first element of this variable.
+  stages:
+    - synth
 SWAP_ARITH_OPERATORS:
   description: >
     Improve timing QoR by swapping ALU and MULT arithmetic operators.
   stages:
-    - synth
-    - floorplan
-    - place
-    - cts
-    - grt
-    - route
-    - final
+    - All stages
 FLOORPLAN_DEF:
   description: |
-    Use the DEF file to initialize floorplan.
+    Use the DEF file to initialize floorplan. Mutually exclusive with FOOTPRINT or DIE_AREA/CORE_AREA or CORE_UTILIZATION.
   stages:
     - floorplan
+    - place
+DONT_BUFFER_PORTS:
+  description: >
+    Do not buffer input/output ports during floorplanning.
+  stages:
+    - place
+  default: 0
+BUFFER_PORTS_ARGS:
+  description: >
+    Specify arguments to the buffer_ports call during placement. Only used if DONT_BUFFER_PORTS=0.
+  stages:
     - place
 REMOVE_ABC_BUFFERS:
   description: >
@@ -329,6 +410,13 @@ REMOVE_ABC_BUFFERS:
   stages:
     - floorplan
   deprecated: 1
+  default: 0
+BALANCE_ROWS:
+  description: |
+    Balance rows during placement.
+  stages:
+    - place
+  default: 0
 PLACE_SITE:
   description: |
     Placement site for core cells defined in the technology LEF file.
@@ -343,7 +431,9 @@ TAPCELL_TCL:
     - floorplan
 MACRO_PLACEMENT_TCL:
   description: |
-    Specifies the path of a TCL file on how to place certain macros manually.
+    Specifies the path of a TCL file on how to place macros manually.
+    The user may choose to place just some of the macros in the design.
+    The macro placer will handle the remaining unplaced macros.
   stages:
     - floorplan
 MACRO_PLACE_HALO:
@@ -494,6 +584,12 @@ CTS_ARGS:
     Override `clock_tree_synthesis` arguments.
   stages:
     - cts
+CTS_SNAPSHOTS:
+  description: |
+    Create ODB/SDC files at different stages of CTS.
+  stages:
+    - cts
+  default: 0
 HOLD_SLACK_MARGIN:
   description: >
     Specifies a time margin for the slack when fixing hold violations.
@@ -587,6 +683,15 @@ SKIP_VT_SWAP:
     - cts
     - floorplan
     - grt
+SKIP_CRIT_VT_SWAP:
+  description: >
+    Do not perform VT swap on critical cells to improve QoR (default: do critical VT swap).
+    This is an additional VT swap on critical cells that remain near the end of setup fixing.
+    If SKIP_VT_SWAP is set to 1, this also disables critical cell VT swap.
+  stages:
+    - cts
+    - floorplan
+    - grt
 REMOVE_CELLS_FOR_EQY:
   description: >
     String patterns directly passed to write_verilog -remove_cells <> for
@@ -599,11 +704,13 @@ SKIP_CTS_REPAIR_TIMING:
     architectural exploration or when getting CI up and running.
   stages:
     - cts
+  default: 0
 SKIP_REPAIR_TIE_FANOUT:
   description: >
     Skip repair_tie_fanout at floorplan step.
   stages:
     - floorplan
+  default: 0
 MIN_ROUTING_LAYER:
   description: |
     The lowest metal layer name to be used in routing.
@@ -738,9 +845,6 @@ CDL_FILES:
 DFF_LIB_FILES:
   description: |
     Technology mapping liberty files for flip-flops.
-DONT_USE_LIBS:
-  description: |
-    Set liberty files as `dont_use`.
 SYNTH_KEEP_MODULES:
   description: |
     Mark modules to keep from getting removed in flattening.
@@ -823,6 +927,12 @@ CTS_BUF_LIST:
     List of cells used to construct the clock tree. Overrides buffer inference.
   stages:
     - cts
+CLUSTER_FLOPS:
+  description: >
+    Minimum number of flip-flops per sink cluster.
+  stages:
+    - place
+  default: 0
 CTS_CLUSTER_DIAMETER:
   description: >
     Maximum diameter (in microns) of sink cluster.
@@ -924,13 +1034,6 @@ RTLMP_MIN_AR:
   default: 0.33
   stages:
     - floorplan
-RTLMP_SIGNATURE_NET_THRESHOLD:
-  description: >
-    Minimum number of connections between two clusters to be identified as
-    connected.
-  default: 50
-  stages:
-    - floorplan
 RTLMP_AREA_WT:
   description: >
     Weight for the area of the current floorplan.
@@ -1029,6 +1132,16 @@ YOSYS_FLAGS:
   stages:
     - synth
   default: -v 3
+FOOTPRINT:
+  description: |
+    Custom footprint definition file for ICeWall-based floorplan initialization. Mutually exclusive with FLOORPLAN_DEF or DIE_AREA/CORE_AREA or CORE_UTILIZATION.
+  stages:
+    - floorplan
+FOOTPRINT_TCL:
+  description: |
+    Specifies a Tcl script with custom footprint-related commands for floorplan setup.
+  stages:
+    - floorplan
 FLOW_VARIANT:
   description: >
     Flow variant to use, used in the flow variant directory name.
@@ -1042,6 +1155,24 @@ RULES_JSON:
     config.mk or from bazel-orfs.
   stages:
     - test
+SKIP_ANTENNA_REPAIR_PRE_GRT:
+  default: 0
+  description: >
+    Skips antenna repair pre-global routing.
+  stages:
+    - grt
+SKIP_ANTENNA_REPAIR_POST_DRT:
+  default: 0
+  description: >
+    Skips antenna repair post-detailed routing.
+  stages:
+    - route
+SKIP_ANTENNA_REPAIR:
+  default: 0
+  description: >
+    Skips antenna repair entirely.
+  stages:
+    - grt
 SKIP_DETAILED_ROUTE:
   default: 0
   description: >
@@ -1069,3 +1200,13 @@ OPENROAD_HIERARCHICAL:
     otherwise considered flat. Will eventually be the default and
     this option will be retired.
   default: 0
+  stages:
+    - All stages
+MAX_REPAIR_TIMING_ITER:
+  description: >
+    Maximum number of iterations for repair setup and repair hold.
+  stages:
+    - cts
+    - floorplan
+    - grt
+    - place
