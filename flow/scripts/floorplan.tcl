@@ -130,6 +130,8 @@ if { !$::env(SKIP_REPAIR_TIE_FANOUT) } {
 }
 
 if { [env_var_exists_and_non_empty SWAP_ARITH_OPERATORS] } {
+  # Enable sanity checker until replace_arith_modules becomes stable
+  set_debug_level ODB replace_design_check_sanity 1
   replace_arith_modules
 }
 
