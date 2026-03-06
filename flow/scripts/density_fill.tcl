@@ -1,4 +1,5 @@
 source $::env(SCRIPTS_DIR)/load.tcl
+source_step_tcl PRE DENSITY_FILL
 erase_non_stage_variables final
 load_design 5_route.odb 5_route.sdc
 
@@ -13,3 +14,5 @@ if { $::env(USE_FILL) } {
   log_cmd exec cp $::env(RESULTS_DIR)/5_route.odb $::env(RESULTS_DIR)/6_1_fill.odb
   # There is no 5_route.v file to copy
 }
+
+source_step_tcl POST DENSITY_FILL

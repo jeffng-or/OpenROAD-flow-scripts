@@ -1,5 +1,6 @@
 utl::set_metrics_stage "cts__{}"
 source $::env(SCRIPTS_DIR)/load.tcl
+source_step_tcl PRE CTS
 source $::env(SCRIPTS_DIR)/lec_check.tcl
 erase_non_stage_variables cts
 load_design 3_place.odb 3_place.sdc
@@ -86,7 +87,7 @@ if { !$::env(SKIP_CTS_REPAIR_TIMING) } {
 
 report_metrics 4 "cts final"
 
-source_env_var_if_exists POST_CTS_TCL
+source_step_tcl POST CTS
 
 orfs_write_db $::env(RESULTS_DIR)/4_1_cts.odb
 orfs_write_sdc $::env(RESULTS_DIR)/4_cts.sdc

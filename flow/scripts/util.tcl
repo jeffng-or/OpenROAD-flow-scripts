@@ -192,6 +192,11 @@ proc source_env_var_if_exists { env_var } {
   }
 }
 
+proc source_step_tcl { hook_type step_name } {
+  set env_var "${hook_type}_${step_name}_TCL"
+  source_env_var_if_exists $env_var
+}
+
 # Feature toggle for now, eventually the -hier option
 # will be default and this code will be deleted.
 proc hier_options { } {

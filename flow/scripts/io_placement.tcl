@@ -1,4 +1,5 @@
 source $::env(SCRIPTS_DIR)/load.tcl
+source_step_tcl PRE IO_PLACEMENT
 erase_non_stage_variables place
 
 if {
@@ -16,3 +17,5 @@ if {
 } else {
   log_cmd exec cp $::env(RESULTS_DIR)/3_1_place_gp_skip_io.odb $::env(RESULTS_DIR)/3_2_place_iop.odb
 }
+
+source_step_tcl POST IO_PLACEMENT

@@ -1,5 +1,6 @@
 utl::set_metrics_stage "globalplace__{}"
 source $::env(SCRIPTS_DIR)/load.tcl
+source_step_tcl PRE GLOBAL_PLACE
 erase_non_stage_variables place
 load_design 3_2_place_iop.odb 2_floorplan.sdc
 
@@ -73,5 +74,7 @@ if { $::env(CLUSTER_FLOPS) } {
 }
 
 report_metrics 3 "global place" false false
+
+source_step_tcl POST GLOBAL_PLACE
 
 orfs_write_db $::env(RESULTS_DIR)/3_3_place_gp.odb

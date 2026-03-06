@@ -1320,3 +1320,654 @@ ASAP7_USE_VT:
   stages:
     - All stages
   default: RVT
+    Weight for violating the fixed outline constraint, meaning that all
+    clusters should be placed within the shape of their parent cluster.
+  default: 100.00
+  stages:
+    - floorplan
+RTLMP_BOUNDARY_WT:
+  description: >
+    Weight for the boundary or how far the hard macro clusters are from
+    boundaries.
+  default: 50.0
+  stages:
+    - floorplan
+RTLMP_NOTCH_WT:
+  description: >
+    Weight for the notch, or the existence of dead space that cannot be used
+    for placement and routing.
+  default: 50.0
+  stages:
+    - floorplan
+RTLMP_RPT_DIR:
+  description: >
+    Path to the directory where reports are saved.
+  stages:
+    - floorplan
+RTLMP_FENCE_LX:
+  description: >
+    Defines the lower left X coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_FENCE_LY:
+  description: >
+    Defines the lower left Y coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_FENCE_UX:
+  description: >
+    Defines the upper right X coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_FENCE_UY:
+  description: >
+    Defines the upper right Y coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_ARGS:
+  description: >
+    Overrides all other RTL macro placer arguments.
+  stages:
+    - floorplan
+GDS_ALLOW_EMPTY:
+  description: >
+    Single regular expression of module names of macros that have no .gds file
+  stages:
+    - final
+RUN_SCRIPT:
+  description: >
+    Path to script to run from `make run`, python or tcl script detected by
+    .py or .tcl extension.
+RUN_LOG_NAME_STEM:
+  description: >
+    Stem of the log file name, the log file will be named
+    `$(LOG_DIR)/$(RUN_LOG_NAME_STEM).log`.
+  default: run
+YOSYS_FLAGS:
+  description: >
+    Flags to pass to yosys.
+  stages:
+    - synth
+  default: -v 3
+FOOTPRINT:
+  description: |
+    Custom footprint definition file for ICeWall-based floorplan initialization. Mutually exclusive with FLOORPLAN_DEF or DIE_AREA/CORE_AREA or CORE_UTILIZATION.
+  stages:
+    - floorplan
+FOOTPRINT_TCL:
+  description: |
+    Specifies a Tcl script with custom footprint-related commands for floorplan setup.
+  stages:
+    - floorplan
+FLOW_VARIANT:
+  description: >
+    Flow variant to use, used in the flow variant directory name.
+  default: base
+RULES_JSON:
+  description: >
+    json files with the metrics baseline regression rules.
+    In the ORFS Makefile, this defaults to $DESIGN_DIR/rules-base.json,
+    but ORFS does not mandate the users source directory layout and
+    this can be placed elsewhere when the user sets up an ORFS
+    config.mk or from bazel-orfs.
+  stages:
+    - test
+SKIP_ANTENNA_REPAIR_PRE_GRT:
+  default: 0
+  description: >
+    Skips antenna repair pre-global routing.
+  stages:
+    - grt
+SKIP_ANTENNA_REPAIR_POST_DRT:
+  default: 0
+  description: >
+    Skips antenna repair post-detailed routing.
+  stages:
+    - route
+SKIP_ANTENNA_REPAIR:
+  default: 0
+  description: >
+    Skips antenna repair entirely.
+  stages:
+    - grt
+SKIP_DETAILED_ROUTE:
+  default: 0
+  description: >
+    Skips detailed route.
+  stages:
+    - route
+    - final
+MAX_REPAIR_ANTENNAS_ITER_DRT:
+  default: 5
+  description: >
+    Defines the maximum number of iterations post-detailed routing repair
+    antennas will run.
+  stages:
+    - route
+MAX_REPAIR_ANTENNAS_ITER_GRT:
+  default: 5
+  description: >
+    Defines the maximum number of iterations post global routing repair
+    antennas will run.
+  stages:
+    - grt
+OPENROAD_HIERARCHICAL:
+  description: >
+    Feature toggle to enable to run OpenROAD in hierarchical mode,
+    otherwise considered flat. Will eventually be the default and
+    this option will be retired.
+  default: 0
+  stages:
+    - All stages
+MAX_REPAIR_TIMING_ITER:
+  description: >
+    Maximum number of iterations for repair setup and repair hold.
+  stages:
+    - cts
+    - floorplan
+    - grt
+    - place
+NUM_CORES:
+  description: >
+    Passed to `openroad -threads $(NUM_CORES)`, defaults to numbers
+    of cores in system as determined by system specific code in Makefile,
+    `nproc` is tried first.
+    OpenROAD does not limit itself to this number of cores across
+    OpenROAD running instances, which can lead to overprovisioning
+    in contexts such as bazel-orfs where there could be many
+    routing, or place jobs running at the same time.
+  stages:
+    - All stages
+KEEP_VARS:
+  description: >
+    Feature toggle to keep intermediate variables during the flow.
+    This is useful for the single-run flow, where all stages of the flow
+    are run in a single OpenROAD instance.
+  default: 0
+  stages:
+    - All stages
+WRITE_ODB_AND_SDC_EACH_STAGE:
+  description: >
+    Save out .sdc and .odb file after each stage, useful to disable
+    when using a single OpenROAD instance to run all stages of the flow.
+  stages:
+    - All stages
+  default: 1
+LEC_CHECK:
+  description: >
+    Perform a formal equivalence check between before and after netlists.
+    If this fails, report an issue to OpenROAD.
+  default: 0
+  stages:
+    - cts
+REMOVE_CELLS_FOR_LEC:
+  description: >
+    String patterns directly passed to write_verilog -remove_cells <> for
+    lec checks.
+  type: string
+ASAP7_USE_VT:
+  description: >
+    A space separated list of VT options to use with the ASAP7 standard cell library:
+    RVT, LVT, SLVT.
+  stages:
+    - All stages
+  default: RVT
+PRE_SYNTH_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before synthesis ODB generation.
+  stages:
+    - synth
+POST_SYNTH_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after synthesis ODB generation.
+  stages:
+    - synth
+PRE_FLOORPLAN_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before floorplan.
+  stages:
+    - floorplan
+POST_FLOORPLAN_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after floorplan is completed.
+  stages:
+    - floorplan
+PRE_MACRO_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before macro placement.
+  stages:
+    - floorplan
+POST_MACRO_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after macro placement.
+  stages:
+    - floorplan
+PRE_TAPCELL_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before tapcell.
+  stages:
+    - floorplan
+POST_TAPCELL_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after tapcell.
+  stages:
+    - floorplan
+PRE_PDN_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before PDN generation.
+  stages:
+    - floorplan
+POST_PDN_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after PDN generation.
+  stages:
+    - floorplan
+PRE_GLOBAL_PLACE_SKIP_IO_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before global placement (skip IO).
+  stages:
+    - place
+POST_GLOBAL_PLACE_SKIP_IO_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after global placement (skip IO).
+  stages:
+    - place
+PRE_IO_PLACEMENT_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before IO placement.
+  stages:
+    - place
+POST_IO_PLACEMENT_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after IO placement.
+  stages:
+    - place
+PRE_GLOBAL_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before global placement.
+  stages:
+    - place
+POST_GLOBAL_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after global placement.
+  stages:
+    - place
+PRE_RESIZE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before resize.
+  stages:
+    - place
+POST_RESIZE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after resize.
+  stages:
+    - place
+PRE_DETAIL_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before detailed placement.
+  stages:
+    - place
+POST_DETAIL_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after detailed placement.
+  stages:
+    - place
+PRE_REPAIR_TIMING_POST_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before post-place timing repair.
+  stages:
+    - place
+POST_REPAIR_TIMING_POST_PLACE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after post-place timing repair.
+  stages:
+    - place
+PRE_CTS_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before CTS.
+  stages:
+    - cts
+POST_CTS_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after CTS is completed.
+  stages:
+    - cts
+FASTROUTE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before FastRoute.
+USE_FILL:
+  description: >
+    Whether to perform metal density filling.
+  default: 0
+SEAL_GDS:
+  description: |
+    Seal macro to place around the design.
+ABSTRACT_SOURCE:
+  description: |
+    Which .odb file to use to create abstract
+  stages:
+    - generate_abstract
+PRE_GLOBAL_ROUTE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before global route.
+  stages:
+    - grt
+POST_GLOBAL_ROUTE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after global route.
+  stages:
+    - grt
+PRE_DETAIL_ROUTE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before detailed route.
+  stages:
+    - route
+POST_DETAIL_ROUTE_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after detailed route.
+  stages:
+    - route
+PRE_FILLCELL_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before fillcell insertion.
+  stages:
+    - route
+POST_FILLCELL_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after fillcell insertion.
+  stages:
+    - route
+PRE_DENSITY_FILL_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before density fill.
+  stages:
+    - final
+POST_DENSITY_FILL_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after density fill.
+  stages:
+    - final
+PRE_FINAL_REPORT_TCL:
+  description: |
+    Specifies a Tcl script with commands to run before final report generation.
+  stages:
+    - final
+POST_FINAL_REPORT_TCL:
+  description: |
+    Specifies a Tcl script with commands to run after final report generation.
+  stages:
+    - final
+GLOBAL_ROUTE_ARGS:
+  description: >
+    Replaces default arguments for global route.
+  stages:
+    - grt
+  default: -congestion_iterations 30 -congestion_report_iter_step 5 -verbose
+MATCH_CELL_FOOTPRINT:
+  description: >
+    Enforce sizing operations to only swap cells that have the same layout
+    boundary.
+  stages:
+    - floorplan
+    - place
+    - cts
+    - route
+  default: 0
+RTLMP_MAX_LEVEL:
+  description: >
+    Maximum depth of the physical hierarchy tree.
+  default: 2
+  stages:
+    - floorplan
+RTLMP_MAX_INST:
+  description: >
+    Maximum number of standard cells in a cluster. If unset, rtl_macro_placer
+    will calculate a value based on the design attributes.
+  stages:
+    - floorplan
+RTLMP_MIN_INST:
+  description: >
+    Minimum number of standard cells in a cluster. If unset, rtl_macro_placer
+    will calculate a value based on the design attributes.
+  stages:
+    - floorplan
+RTLMP_MAX_MACRO:
+  description: >
+    Maximum number of macros in a cluster. If unset, rtl_macro_placer will
+    calculate a value based on the design attributes.
+  stages:
+    - floorplan
+RTLMP_MIN_MACRO:
+  description: >
+    Minimum number of macros in a cluster. If unset, rtl_macro_placer will
+    calculate a value based on the design attributes.
+  stages:
+    - floorplan
+RTLMP_MIN_AR:
+  description: >
+    Specifies the minimum aspect ratio (height/width).
+  default: 0.33
+  stages:
+    - floorplan
+RTLMP_AREA_WT:
+  description: >
+    Weight for the area of the current floorplan.
+  default: 0.1
+  stages:
+    - floorplan
+RTLMP_WIRELENGTH_WT:
+  description: >
+    Weight for half-perimiter wirelength.
+  default: 100.0
+  stages:
+    - floorplan
+RTLMP_OUTLINE_WT:
+  description: >
+    Weight for violating the fixed outline constraint, meaning that all
+    clusters should be placed within the shape of their parent cluster.
+  default: 100.00
+  stages:
+    - floorplan
+RTLMP_BOUNDARY_WT:
+  description: >
+    Weight for the boundary or how far the hard macro clusters are from
+    boundaries.
+  default: 50.0
+  stages:
+    - floorplan
+RTLMP_NOTCH_WT:
+  description: >
+    Weight for the notch, or the existence of dead space that cannot be used
+    for placement and routing.
+  default: 50.0
+  stages:
+    - floorplan
+RTLMP_RPT_DIR:
+  description: >
+    Path to the directory where reports are saved.
+  stages:
+    - floorplan
+RTLMP_FENCE_LX:
+  description: >
+    Defines the lower left X coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_FENCE_LY:
+  description: >
+    Defines the lower left Y coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_FENCE_UX:
+  description: >
+    Defines the upper right X coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_FENCE_UY:
+  description: >
+    Defines the upper right Y coordinate for the global fence bounding box in
+    microns.
+  default: 0.0
+  stages:
+    - floorplan
+RTLMP_ARGS:
+  description: >
+    Overrides all other RTL macro placer arguments.
+  stages:
+    - floorplan
+GDS_ALLOW_EMPTY:
+  description: >
+    Single regular expression of module names of macros that have no .gds file
+  stages:
+    - final
+RUN_SCRIPT:
+  description: >
+    Path to script to run from `make run`, python or tcl script detected by
+    .py or .tcl extension.
+RUN_LOG_NAME_STEM:
+  description: >
+    Stem of the log file name, the log file will be named
+    `$(LOG_DIR)/$(RUN_LOG_NAME_STEM).log`.
+  default: run
+YOSYS_FLAGS:
+  description: >
+    Flags to pass to yosys.
+  stages:
+    - synth
+  default: -v 3
+FOOTPRINT:
+  description: |
+    Custom footprint definition file for ICeWall-based floorplan initialization. Mutually exclusive with FLOORPLAN_DEF or DIE_AREA/CORE_AREA or CORE_UTILIZATION.
+  stages:
+    - floorplan
+FOOTPRINT_TCL:
+  description: |
+    Specifies a Tcl script with custom footprint-related commands for floorplan setup.
+  stages:
+    - floorplan
+FLOW_VARIANT:
+  description: >
+    Flow variant to use, used in the flow variant directory name.
+  default: base
+RULES_JSON:
+  description: >
+    json files with the metrics baseline regression rules.
+    In the ORFS Makefile, this defaults to $DESIGN_DIR/rules-base.json,
+    but ORFS does not mandate the users source directory layout and
+    this can be placed elsewhere when the user sets up an ORFS
+    config.mk or from bazel-orfs.
+  stages:
+    - test
+SKIP_ANTENNA_REPAIR_PRE_GRT:
+  default: 0
+  description: >
+    Skips antenna repair pre-global routing.
+  stages:
+    - grt
+SKIP_ANTENNA_REPAIR_POST_DRT:
+  default: 0
+  description: >
+    Skips antenna repair post-detailed routing.
+  stages:
+    - route
+SKIP_ANTENNA_REPAIR:
+  default: 0
+  description: >
+    Skips antenna repair entirely.
+  stages:
+    - grt
+SKIP_DETAILED_ROUTE:
+  default: 0
+  description: >
+    Skips detailed route.
+  stages:
+    - route
+    - final
+MAX_REPAIR_ANTENNAS_ITER_DRT:
+  default: 5
+  description: >
+    Defines the maximum number of iterations post-detailed routing repair
+    antennas will run.
+  stages:
+    - route
+MAX_REPAIR_ANTENNAS_ITER_GRT:
+  default: 5
+  description: >
+    Defines the maximum number of iterations post global routing repair
+    antennas will run.
+  stages:
+    - grt
+OPENROAD_HIERARCHICAL:
+  description: >
+    Feature toggle to enable to run OpenROAD in hierarchical mode,
+    otherwise considered flat. Will eventually be the default and
+    this option will be retired.
+  default: 0
+  stages:
+    - All stages
+MAX_REPAIR_TIMING_ITER:
+  description: >
+    Maximum number of iterations for repair setup and repair hold.
+  stages:
+    - cts
+    - floorplan
+    - grt
+    - place
+NUM_CORES:
+  description: >
+    Passed to `openroad -threads $(NUM_CORES)`, defaults to numbers
+    of cores in system as determined by system specific code in Makefile,
+    `nproc` is tried first.
+    OpenROAD does not limit itself to this number of cores across
+    OpenROAD running instances, which can lead to overprovisioning
+    in contexts such as bazel-orfs where there could be many
+    routing, or place jobs running at the same time.
+  stages:
+    - All stages
+KEEP_VARS:
+  description: >
+    Feature toggle to keep intermediate variables during the flow.
+    This is useful for the single-run flow, where all stages of the flow
+    are run in a single OpenROAD instance.
+  default: 0
+  stages:
+    - All stages
+WRITE_ODB_AND_SDC_EACH_STAGE:
+  description: >
+    Save out .sdc and .odb file after each stage, useful to disable
+    when using a single OpenROAD instance to run all stages of the flow.
+  stages:
+    - All stages
+  default: 1
+LEC_CHECK:
+  description: >
+    Perform a formal equivalence check between before and after netlists.
+    If this fails, report an issue to OpenROAD.
+  default: 0
+  stages:
+    - cts
+REMOVE_CELLS_FOR_LEC:
+  description: >
+    String patterns directly passed to write_verilog -remove_cells <> for
+    lec checks.
+  type: string
+ASAP7_USE_VT:
+  description: >
+    A space separated list of VT options to use with the ASAP7 standard cell library:
+    RVT, LVT, SLVT.
+  stages:
+    - All stages
+  default: RVT
