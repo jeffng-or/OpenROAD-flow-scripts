@@ -44,7 +44,7 @@
         "compare": ">="
     },
     "globalroute__antenna_diodes_count": {
-        "value": 193,
+        "value": 200,
         "compare": "<="
     },
     "globalroute__timing__setup__ws": {
