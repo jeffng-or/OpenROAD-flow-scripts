@@ -1,16 +1,6 @@
-# Extract cell names from liberty files by parsing "cell(...)" declarations
-proc get_liberty_cell_names { lib_files } {
-  set cell_names [list]
-  foreach lib $lib_files {
-    set fid [open $lib r]
-    while { [gets $fid line] >= 0 } {
-      if { [regexp {^\s*cell\s*\(\s*"?([^")\s]+)"?\s*\)} $line -> cell_name] } {
-        lappend cell_names $cell_name
-      }
-    }
-    close $fid
-  }
-  return $cell_names
+# Extract cell names
+proc get_liberty_cell_names { } {
+  return [tee -q -s result.string select -list-mod =A:liberty_cell]
 }
 
 proc log_cmd { cmd args } {

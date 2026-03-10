@@ -68,7 +68,7 @@ proc read_design_sources { } {
     # ignored in favor of the liberty view, consistent with the
     # behavior of the builtin Verilog frontend.
     if { [env_var_exists_and_non_empty ADDITIONAL_LIBS] } {
-      foreach m [get_liberty_cell_names $::env(ADDITIONAL_LIBS)] {
+      foreach m [get_liberty_cell_names] {
         lappend slang_args --blackboxed-module "$m"
       }
     }
