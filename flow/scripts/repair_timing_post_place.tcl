@@ -3,6 +3,7 @@ source $::env(SCRIPTS_DIR)/load.tcl
 source_step_tcl PRE REPAIR_TIMING_POST_PLACE
 erase_non_stage_variables place
 load_design 3_5_place_dp.odb 3_place.sdc
+source_step_tcl PRE REPAIR_TIMING_POST_PLACE
 
 set_placement_padding -global \
   -left $::env(CELL_PAD_IN_SITES_DETAIL_PLACEMENT) \

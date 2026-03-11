@@ -3,6 +3,7 @@ source $::env(SCRIPTS_DIR)/load.tcl
 source_step_tcl PRE RESIZE
 erase_non_stage_variables place
 load_design 3_3_place_gp.odb 2_floorplan.sdc
+source_step_tcl PRE RESIZE
 
 log_cmd estimate_parasitics -placement
 

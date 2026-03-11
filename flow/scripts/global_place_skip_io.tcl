@@ -2,6 +2,7 @@ source $::env(SCRIPTS_DIR)/load.tcl
 source_step_tcl PRE GLOBAL_PLACE_SKIP_IO
 erase_non_stage_variables place
 load_design 2_floorplan.odb 2_floorplan.sdc
+source_step_tcl PRE GLOBAL_PLACE_SKIP_IO
 
 if { [env_var_exists_and_non_empty FLOORPLAN_DEF] } {
   puts "FLOORPLAN_DEF is set. Skipping global placement without IOs"

@@ -3,6 +3,7 @@ source $::env(SCRIPTS_DIR)/load.tcl
 source_step_tcl PRE DETAIL_PLACE
 erase_non_stage_variables place
 load_design 3_4_place_resized.odb 2_floorplan.sdc
+source_step_tcl PRE DETAIL_PLACE
 
 source $::env(PLATFORM_DIR)/setRC.tcl
 

@@ -3,6 +3,7 @@ source_step_tcl PRE TAPCELL
 erase_non_stage_variables floorplan
 
 load_design 2_2_floorplan_macro.odb 2_1_floorplan.sdc
+source_step_tcl PRE TAPCELL
 
 if { [env_var_exists_and_non_empty TAPCELL_TCL] } {
   source $::env(TAPCELL_TCL)

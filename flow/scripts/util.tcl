@@ -263,3 +263,8 @@ proc orfs_write_sdc { output_file } {
   }
   log_cmd write_sdc -no_timestamp $output_file
 }
+
+proc source_step_tcl { hook_type step_name } {
+  set env_var "${hook_type}_${step_name}_TCL"
+  source_env_var_if_exists $env_var
+}

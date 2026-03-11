@@ -4,6 +4,7 @@ source_step_tcl PRE CTS
 source $::env(SCRIPTS_DIR)/lec_check.tcl
 erase_non_stage_variables cts
 load_design 3_place.odb 3_place.sdc
+source_step_tcl PRE CTS
 
 # Clone clock tree inverters next to register loads
 # so cts does not try to buffer the inverted clocks.
