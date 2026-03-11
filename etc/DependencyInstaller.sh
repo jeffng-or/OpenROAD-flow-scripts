@@ -152,19 +152,29 @@ _installUbuntuPackages() {
     apt-get -y update
     apt-get -y install --no-install-recommends \
         bison \
+        capnproto \
+        clang \
         curl \
         flex \
         help2man \
+        libboost-dev \
+        libboost-iostreams-dev \
+        libcapnp-dev \
         libfl-dev \
+        libfmt-dev \
         libfl2 \
         libgit2-dev \
         libgoogle-perftools-dev \
+        libgtest-dev \
         libqt5multimediawidgets5 \
         libqt5opengl5 \
         libqt5svg5-dev \
         libqt5xmlpatterns5-dev \
+        libspdlog-dev \
+        libtbb-dev \
         libz-dev \
         perl \
+        pkg-config \
         python3-pip \
         python3-venv \
         qtmultimedia5-dev \
@@ -274,10 +284,7 @@ _installCI() {
         coreutils \
         curl \
         python3 \
-        software-properties-common \
-        clang pkg-config \
-        libboost-dev libfl-dev libtbb-dev capnproto libcapnp-dev \
-        libgtest-dev libspdlog-dev libfmt-dev libboost-iostreams-dev zlib1g-dev
+        software-properties-common
 }
 
 _help() {
