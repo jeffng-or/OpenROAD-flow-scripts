@@ -1,6 +1,5 @@
 utl::set_metrics_stage "floorplan__{}"
 source $::env(SCRIPTS_DIR)/load.tcl
-source_step_tcl PRE FLOORPLAN
 erase_non_stage_variables floorplan
 load_design 1_synth.odb 1_synth.sdc
 source_step_tcl PRE FLOORPLAN

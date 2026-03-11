@@ -1,6 +1,5 @@
 utl::set_metrics_stage "finish__{}"
 source $::env(SCRIPTS_DIR)/load.tcl
-source_step_tcl PRE FINAL_REPORT
 erase_non_stage_variables final
 load_design 6_1_fill.odb 6_1_fill.sdc
 source_step_tcl PRE FINAL_REPORT
@@ -72,5 +71,3 @@ source_step_tcl POST FINAL_REPORT
 if { [ord::openroad_gui_compiled] && [env_var_exists_and_non_empty DISPLAY] } {
   gui::show "source $::env(SCRIPTS_DIR)/save_images.tcl" false
 }
-
-source_step_tcl POST FINAL_REPORT

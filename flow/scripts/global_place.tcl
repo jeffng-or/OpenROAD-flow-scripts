@@ -1,6 +1,5 @@
 utl::set_metrics_stage "globalplace__{}"
 source $::env(SCRIPTS_DIR)/load.tcl
-source_step_tcl PRE GLOBAL_PLACE
 erase_non_stage_variables place
 load_design 3_2_place_iop.odb 2_floorplan.sdc
 source_step_tcl PRE GLOBAL_PLACE

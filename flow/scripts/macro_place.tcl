@@ -1,5 +1,4 @@
 source $::env(SCRIPTS_DIR)/load.tcl
-source_step_tcl PRE MACRO_PLACE
 erase_non_stage_variables floorplan
 load_design 2_1_floorplan.odb 2_1_floorplan.sdc
 source_step_tcl PRE MACRO_PLACE

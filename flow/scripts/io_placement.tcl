@@ -1,5 +1,4 @@
 source $::env(SCRIPTS_DIR)/load.tcl
-source_step_tcl PRE IO_PLACEMENT
 erase_non_stage_variables place
 
 if {
@@ -13,7 +12,6 @@ if {
     -hor_layers $::env(IO_PLACER_H) \
     -ver_layers $::env(IO_PLACER_V) \
     {*}[env_var_or_empty PLACE_PINS_ARGS]
-  source_step_tcl POST IO_PLACEMENT
   orfs_write_db $::env(RESULTS_DIR)/3_2_place_iop.odb
   write_pin_placement $::env(RESULTS_DIR)/3_2_place_iop.tcl
 } else {

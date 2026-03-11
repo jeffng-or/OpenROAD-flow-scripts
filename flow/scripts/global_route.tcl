@@ -112,8 +112,6 @@ proc global_route_helper { } {
   # Use make target update_sdc_clock to install the updated sdc.
   source [file join $::env(SCRIPTS_DIR) "write_ref_sdc.tcl"]
 
-  source_step_tcl POST GLOBAL_ROUTE
-
   write_guides $::env(RESULTS_DIR)/route.guide
   source_step_tcl POST GLOBAL_ROUTE
   orfs_write_db $::env(RESULTS_DIR)/5_1_grt.odb

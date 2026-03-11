@@ -1,5 +1,4 @@
 source $::env(SCRIPTS_DIR)/load.tcl
-source_step_tcl PRE GLOBAL_PLACE_SKIP_IO
 erase_non_stage_variables place
 load_design 2_floorplan.odb 2_floorplan.sdc
 source_step_tcl PRE GLOBAL_PLACE_SKIP_IO

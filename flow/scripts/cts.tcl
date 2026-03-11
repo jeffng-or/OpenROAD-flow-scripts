@@ -1,6 +1,5 @@
 utl::set_metrics_stage "cts__{}"
 source $::env(SCRIPTS_DIR)/load.tcl
-source_step_tcl PRE CTS
 source $::env(SCRIPTS_DIR)/lec_check.tcl
 erase_non_stage_variables cts
 load_design 3_place.odb 3_place.sdc
