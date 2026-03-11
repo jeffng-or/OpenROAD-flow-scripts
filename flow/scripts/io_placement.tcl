@@ -11,10 +11,11 @@ if {
     -hor_layers $::env(IO_PLACER_H) \
     -ver_layers $::env(IO_PLACER_V) \
     {*}[env_var_or_empty PLACE_PINS_ARGS]
+  report_design_area
+
   orfs_write_db $::env(RESULTS_DIR)/3_2_place_iop.odb
   write_pin_placement $::env(RESULTS_DIR)/3_2_place_iop.tcl
 } else {
   log_cmd exec cp $::env(RESULTS_DIR)/3_1_place_gp_skip_io.odb $::env(RESULTS_DIR)/3_2_place_iop.odb
 }
 
-report_design_area
