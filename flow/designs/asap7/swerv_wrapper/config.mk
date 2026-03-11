@@ -54,7 +54,7 @@ export ADDITIONAL_LIBS = $(sort $(wildcard $(DESIGN_HOME)/$(PLATFORM)/swerv_wrap
 export CORE_UTILIZATION = 30
 
 export IO_CONSTRAINTS     = $(DESIGN_HOME)/$(PLATFORM)/swerv_wrapper/io.tcl
-export PLACE_DENSITY_LB_ADDON = 0.30
+export PLACE_DENSITY_LB_ADDON = 0.20
 
 export ROUTING_LAYER_ADJUSTMENT = 0.2
 
