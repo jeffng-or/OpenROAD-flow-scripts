@@ -147,6 +147,7 @@ if { $::env(REMOVE_ABC_BUFFERS) } {
 puts "Default units for flow"
 report_units
 report_units_metric
+report_layer_rc
 report_metrics 2 "floorplan final" false false
 
 source_step_tcl POST FLOORPLAN
