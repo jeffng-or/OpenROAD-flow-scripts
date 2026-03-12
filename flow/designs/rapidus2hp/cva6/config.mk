@@ -150,4 +150,3 @@ export SWAP_ARITH_OPERATORS = 1
 export OPENROAD_HIERARCHICAL = 1
 
 # Until the verilog writer fix is merged
-export LEC_CHECK = 0
