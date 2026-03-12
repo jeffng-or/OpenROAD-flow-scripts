@@ -1,3 +1,8 @@
+# Extract cell names
+proc get_liberty_cell_names { } {
+  return [tee -q -s result.string select -list-mod =A:liberty_cell]
+}
+
 proc log_cmd { cmd args } {
   # log the command, escape arguments with spaces
   set log_cmd "$cmd[join [lmap arg $args { format " %s" [expr { [string match {* *} $arg] ? "\"$arg\"" : "$arg" }] }] ""]" ;# tclint-disable-line line-length
