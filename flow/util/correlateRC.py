@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-# Read grt/rcx capacitance/wire length files for multiple designs and
-# use linear regression to fit layer capacitances to rcx net capacitances.
-# Use ORFS 'make write_net_rc' to write cap files.
+# Script for generating and comparing per-layer parasitics values.
+# These values are used by set_layer_rc and will be the base
+# values for the parasitics estimations across the flow.
 
 import os
 from sys import exit, stderr
@@ -45,6 +45,13 @@ def parse_args():
         action="store_true",
         default=False,
         help="Plot grt/rcx resistance differences",
+    )
+    parser.add_argument(
+        "--mode",
+        required=False,
+        choices=["net", "segment"],
+        default="net",
+        help="Input mode: 'net' for net-level RC (make write_net_rc), 'segment' for segment-level RC (make write_segment_rc)",
     )
     parser.add_argument(
         "rc_file", nargs="+", help="rc csv file written by make compare_rc"
@@ -120,43 +127,47 @@ for rc_file in args.rc_file:
                 continue
 
             tokens = line.strip().split(",")
-            netName = tokens[0]
 
-            data[design][netName] = {
-                "type": tokens[1],
-                "grt_res": float(tokens[2]),
-                "grt_cap": float(tokens[3]),
-                "rcx_res": float(tokens[4]),
-                "rcx_cap": float(tokens[5]),
-            }
+            if args.mode == "segment":
+                pass
+            else:
+                netName = tokens[0]
 
-            layer_lengths = [float(tok) for tok in tokens[6:]]
-            for i, length in enumerate(layer_lengths):
-                if length > 0:
-                    active_layers.add(i)
+                data[design][netName] = {
+                    "type": tokens[1],
+                    "grt_res": float(tokens[2]),
+                    "grt_cap": float(tokens[3]),
+                    "rcx_res": float(tokens[4]),
+                    "rcx_cap": float(tokens[5]),
+                }
 
-            data[design][netName]["layer_lengths"] = layer_lengths
-            data[design][netName]["routable_layer_lengths"] = [
-                length
-                for i, length in enumerate(layer_lengths)
-                # ignore non-routable layers
-                if stack[i][1]
-            ]
-            data[design][netName]["wire_length"] = sum(
-                length
-                for i, length in enumerate(layer_lengths)
-                # ignore non-routable layers
-                if stack[i][1]
-            )
-            data[design][netName]["grt_via_res"] = sum(
-                (length * stack[i][2])
-                for i, length in enumerate(layer_lengths)
-                if not stack[i][1]
-            )
+                layer_lengths = [float(tok) for tok in tokens[6:]]
+                for i, length in enumerate(layer_lengths):
+                    if length > 0:
+                        active_layers.add(i)
+
+                data[design][netName]["layer_lengths"] = layer_lengths
+                data[design][netName]["routable_layer_lengths"] = [
+                    length
+                    for i, length in enumerate(layer_lengths)
+                    # ignore non-routable layers
+                    if stack[i][1]
+                ]
+                data[design][netName]["wire_length"] = sum(
+                    length
+                    for i, length in enumerate(layer_lengths)
+                    # ignore non-routable layers
+                    if stack[i][1]
+                )
+                data[design][netName]["grt_via_res"] = sum(
+                    (length * stack[i][2])
+                    for i, length in enumerate(layer_lengths)
+                    if not stack[i][1]
+                )
 
 ################################################################
 
-if args.plot_cap:
+if args.mode == "net" and args.plot_cap:
     # Compare the GRT cap estimate vs. OpenRCX SPEF cap
 
     diff_x = []
@@ -198,7 +209,7 @@ if args.plot_cap:
 
 ################################################################
 
-if args.plot_res:
+if args.mode == "net" and args.plot_res:
     # Compare the GRT res estimate vs. OpenRCX SPEF res
 
     diff_x = []
@@ -241,96 +252,102 @@ if args.plot_res:
 
 ################################################################
 
-# Use linear regression to find updated layer resistances.
+if args.mode == "net":
+    # Use linear regression to find updated layer resistances.
 
-x = []
-y = []
-for design in data:
-    for net in data[design]:
-        rcx_res = data[design][net]["rcx_res"]
-        if rcx_res > 0:
+    x = []
+    y = []
+    for design in data:
+        for net in data[design]:
+            rcx_res = data[design][net]["rcx_res"]
+            if rcx_res > 0:
+                x.append(data[design][net]["routable_layer_lengths"])
+                y.append(rcx_res - data[design][net]["grt_via_res"])
+
+    x = np.array(x)
+    y = np.array(y)
+
+    res_model = LinearRegression(fit_intercept=False).fit(x, y)
+    r_sq = res_model.score(x, y)
+    print("# Resistance coefficient of determination: {:.4f}".format(r_sq))
+
+    ################################################################
+
+    # Use linear regression to find updated layer capacitances.
+
+    x = []
+    y = []
+    for design in data:
+        for net in data[design]:
             x.append(data[design][net]["routable_layer_lengths"])
-            y.append(rcx_res - data[design][net]["grt_via_res"])
+            y.append(data[design][net]["rcx_cap"])
 
-x = np.array(x)
-y = np.array(y)
-
-res_model = LinearRegression(fit_intercept=False).fit(x, y)
-r_sq = res_model.score(x, y)
-print("# Resistance coefficient of determination: {:.4f}".format(r_sq))
-
-################################################################
-
-# Use linear regression to find updated layer capacitances.
-
-x = []
-y = []
-for design in data:
-    for net in data[design]:
-        x.append(data[design][net]["routable_layer_lengths"])
-        y.append(data[design][net]["rcx_cap"])
-
-x = np.array(x)
-y = np.array(y)
-
-cap_model = LinearRegression(fit_intercept=False).fit(x, y)
-r_sq = cap_model.score(x, y)
-print("# Capacitance coefficient of determination: {:.4f}".format(r_sq))
-print("# Updated layer resistance {}/um capacitance {}/um".format(res_unit, cap_unit))
-
-routable_layers = [layer for layer in stack if layer[1]]
-for i, layer in enumerate(routable_layers):
-    res_coeff = res_model.coef_[i]
-    cap_coeff = cap_model.coef_[i]
-    if res_coeff != 0.0 or cap_coeff != 0.0:
-        print(
-            "set_layer_rc -layer {} -resistance {:.5E} -capacitance {:.5E}".format(
-                layer[0], res_coeff / res_scale, cap_coeff / cap_scale
-            )
-        )
-
-################################################################
-
-
-def generic_rc_fit(type_sieve):
-    x = []
-    y = []
-    for design in data:
-        for net in data[design]:
-            net_type = data[design][net]["type"]
-            wire_res = data[design][net]["rcx_res"]
-            wire_length = data[design][net]["wire_length"]
-            if net_type in type_sieve and wire_res != 0.0:
-                x.append([wire_length])
-                y.append(wire_res)
     x = np.array(x)
     y = np.array(y)
-    wire_res_model = LinearRegression(fit_intercept=False).fit(x, y)
-    wire_res = wire_res_model.coef_[0]
 
-    x = []
-    y = []
-    for design in data:
-        for net in data[design]:
-            net_type = data[design][net]["type"]
-            if net_type in type_sieve:
-                wire_length = data[design][net]["wire_length"]
-                wire_cap = data[design][net]["rcx_cap"]
-                x.append([wire_length])
-                y.append(wire_cap)
-    x = np.array(x)
-    y = np.array(y)
-    wire_cap_model = LinearRegression(fit_intercept=False).fit(x, y)
-    wire_cap = wire_cap_model.coef_[0]
-
-    return "-resistance {:.5E} -capacitance {:.5E}".format(
-        wire_res / res_scale, wire_cap / cap_scale
+    cap_model = LinearRegression(fit_intercept=False).fit(x, y)
+    r_sq = cap_model.score(x, y)
+    print("# Capacitance coefficient of determination: {:.4f}".format(r_sq))
+    print(
+        "# Updated layer resistance {}/um capacitance {}/um".format(res_unit, cap_unit)
     )
 
+    routable_layers = [layer for layer in stack if layer[1]]
+    for i, layer in enumerate(routable_layers):
+        res_coeff = res_model.coef_[i]
+        cap_coeff = cap_model.coef_[i]
+        if res_coeff != 0.0 or cap_coeff != 0.0:
+            print(
+                "set_layer_rc -layer {} -resistance {:.5E} -capacitance {:.5E}".format(
+                    layer[0], res_coeff / res_scale, cap_coeff / cap_scale
+                )
+            )
 
-print("# Combined fit:")
-print("set_wire_rc " + generic_rc_fit(["signal", "clock"]))
+    ################################################################
 
-print("# Split signal/clock fit:")
-print("set_wire_rc -signal " + generic_rc_fit(["signal"]))
-print("set_wire_rc -clock " + generic_rc_fit(["clock"]))
+    def generic_rc_fit(type_sieve):
+        x = []
+        y = []
+        for design in data:
+            for net in data[design]:
+                net_type = data[design][net]["type"]
+                wire_res = data[design][net]["rcx_res"]
+                wire_length = data[design][net]["wire_length"]
+                if net_type in type_sieve and wire_res != 0.0:
+                    x.append([wire_length])
+                    y.append(wire_res)
+        x = np.array(x)
+        y = np.array(y)
+        wire_res_model = LinearRegression(fit_intercept=False).fit(x, y)
+        wire_res = wire_res_model.coef_[0]
+
+        x = []
+        y = []
+        for design in data:
+            for net in data[design]:
+                net_type = data[design][net]["type"]
+                if net_type in type_sieve:
+                    wire_length = data[design][net]["wire_length"]
+                    wire_cap = data[design][net]["rcx_cap"]
+                    x.append([wire_length])
+                    y.append(wire_cap)
+        x = np.array(x)
+        y = np.array(y)
+        wire_cap_model = LinearRegression(fit_intercept=False).fit(x, y)
+        wire_cap = wire_cap_model.coef_[0]
+
+        return "-resistance {:.5E} -capacitance {:.5E}".format(
+            wire_res / res_scale, wire_cap / cap_scale
+        )
+
+    print("# Combined fit:")
+    print("set_wire_rc " + generic_rc_fit(["signal", "clock"]))
+
+    print("# Split signal/clock fit:")
+    print("set_wire_rc -signal " + generic_rc_fit(["signal"]))
+    print("set_wire_rc -clock " + generic_rc_fit(["clock"]))
+
+################################################################
+
+if args.mode == "segment":
+    pass
