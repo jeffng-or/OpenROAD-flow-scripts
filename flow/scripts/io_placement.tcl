@@ -7,6 +7,7 @@ if {
   ![env_var_exists_and_non_empty FOOTPRINT_TCL]
 } {
   load_design 3_1_place_gp_skip_io.odb 2_floorplan.sdc
+  source_step_tcl PRE IO_PLACEMENT
   log_cmd place_pins \
     -hor_layers $::env(IO_PLACER_H) \
     -ver_layers $::env(IO_PLACER_V) \
@@ -16,3 +17,5 @@ if {
 } else {
   log_cmd exec cp $::env(RESULTS_DIR)/3_1_place_gp_skip_io.odb $::env(RESULTS_DIR)/3_2_place_iop.odb
 }
+
+source_step_tcl POST IO_PLACEMENT
