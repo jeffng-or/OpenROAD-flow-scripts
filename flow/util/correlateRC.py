@@ -94,6 +94,13 @@ data = makeDict()
 stack = []
 stack_line = None
 
+# For segment mode.
+layer_segments = defaultdict(
+    lambda: {"lengths": [], "resistances": [], "capacitances": []}
+)
+routing_layers = []
+routing_layers_line = None
+
 # indices of relevant layers (routable layers or via layers)
 active_layers = set()
 
@@ -104,6 +111,17 @@ for rc_file in args.rc_file:
     with open(rc_file) as f:
         nonGrtNets = 0
         for line in f:
+            if line.startswith("# routing layers: "):
+                if routing_layers_line is not None and routing_layers_line != line:
+                    print(f"layer stack inconsistent", file=stderr)
+                    exit(1)
+                elif routing_layers_line is None:
+                    routing_layers = (
+                        line.removeprefix("# routing layers: ").strip().split(" ")
+                    )
+                    routing_layers_line = line
+                continue
+
             if line.startswith("# stack: "):
                 if stack_line is not None and stack_line != line:
                     print(f"layer stack inconsistent", file=stderr)
@@ -129,7 +147,9 @@ for rc_file in args.rc_file:
             tokens = line.strip().split(",")
 
             if args.mode == "segment":
-                pass
+                layer_segments[tokens[2]]["lengths"].append(float(tokens[3]))
+                layer_segments[tokens[2]]["resistances"].append(float(tokens[4]))
+                layer_segments[tokens[2]]["capacitances"].append(float(tokens[5]))
             else:
                 netName = tokens[0]
 
@@ -350,4 +370,34 @@ if args.mode == "net":
 ################################################################
 
 if args.mode == "segment":
-    pass
+    print(
+        "# Updated layer resistance {}/um capacitance {}/um".format(res_unit, cap_unit)
+    )
+
+    for layer_name in routing_layers:
+        # There may be routing layers with no segments, so we check if the
+        # layer exists in the dict.
+        if layer_name not in layer_segments:
+            continue
+
+        # sklearn requires the input to be 2D, so we reshape to add a dimension
+        # to the list.
+        lengths = np.array(layer_segments[layer_name]["lengths"]).reshape(-1, 1)
+        resistances = np.array(layer_segments[layer_name]["resistances"])
+        capacitances_ff = np.array(layer_segments[layer_name]["capacitances"])
+
+        res_model = LinearRegression(fit_intercept=False).fit(lengths, resistances)
+        cap_model = LinearRegression(fit_intercept=False).fit(lengths, capacitances_ff)
+
+        r_sq = res_model.score(lengths, resistances)
+        print("# Resistance coefficient of determination: {:.4f}".format(r_sq))
+        r_sq = cap_model.score(lengths, capacitances_ff)
+        print("# Capacitance coefficient of determination: {:.4f}".format(r_sq))
+
+        print(
+            "set_layer_rc -layer {} -resistance {:.5E} -capacitance {:.5E}".format(
+                layer_name,
+                res_model.coef_[0] / res_scale,
+                cap_model.coef_[0] * 1e-15 / cap_scale,
+            )
+        )
