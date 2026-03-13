@@ -1,11 +1,12 @@
 source $::env(SCRIPTS_DIR)/load.tcl
 erase_non_stage_variables floorplan
 load_design 2_3_floorplan_tapcell.odb 2_1_floorplan.sdc
+source_step_tcl PRE PDN
 
 source $::env(PDN_TCL)
 pdngen
 
-source_env_var_if_exists POST_PDN_TCL
+source_step_tcl POST PDN
 
 # Check all supply nets
 set block [ord::get_db_block]
