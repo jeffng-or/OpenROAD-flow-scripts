@@ -153,15 +153,12 @@ _installUbuntuPackages() {
     apt-get -y install --no-install-recommends \
         bison \
         capnproto \
-        clang \
         curl \
         flex \
         help2man \
-        libboost-dev \
         libboost-iostreams-dev \
         libcapnp-dev \
         libfl-dev \
-        libfmt-dev \
         libfl2 \
         libgit2-dev \
         libgoogle-perftools-dev \
@@ -170,7 +167,6 @@ _installUbuntuPackages() {
         libqt5opengl5 \
         libqt5svg5-dev \
         libqt5xmlpatterns5-dev \
-        libspdlog-dev \
         libtbb-dev \
         libz-dev \
         perl \
