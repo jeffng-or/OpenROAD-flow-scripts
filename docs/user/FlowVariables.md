@@ -305,6 +305,7 @@ configuration file.
 | <a name="TIELO_CELL_AND_PORT"></a>TIELO_CELL_AND_PORT| Tie low cells used in Yosys synthesis to replace a logical 0 in the Netlist.| |
 | <a name="TIE_SEPARATION"></a>TIE_SEPARATION| Distance separating tie high/low instances from the load.| 0|
 | <a name="TNS_END_PERCENT"></a>TNS_END_PERCENT| Default TNS_END_PERCENT value for post CTS timing repair. Try fixing all violating endpoints by default (reduce to 5% for runtime). Specifies how many percent of violating paths to fix [0-100]. Worst path will always be fixed.| 100|
+| <a name="UNSET_ABC9_BOX_CELLS"></a>UNSET_ABC9_BOX_CELLS| List of cells to unset the abc9_box attribute on| |
 | <a name="USE_FILL"></a>USE_FILL| Whether to perform metal density filling.| 0|
 | <a name="VERILOG_DEFINES"></a>VERILOG_DEFINES| Preprocessor defines passed to the language frontend. Example: `-D HPDCACHE_ASSERT_OFF`| |
 | <a name="VERILOG_FILES"></a>VERILOG_FILES| The path to the design Verilog/SystemVerilog files providing a description of modules.| |
@@ -349,6 +350,7 @@ configuration file.
 - [SYNTH_WRAPPED_MULTIPLIERS](#SYNTH_WRAPPED_MULTIPLIERS)
 - [TIEHI_CELL_AND_PORT](#TIEHI_CELL_AND_PORT)
 - [TIELO_CELL_AND_PORT](#TIELO_CELL_AND_PORT)
+- [UNSET_ABC9_BOX_CELLS](#UNSET_ABC9_BOX_CELLS)
 - [VERILOG_DEFINES](#VERILOG_DEFINES)
 - [VERILOG_FILES](#VERILOG_FILES)
 - [VERILOG_INCLUDE_DIRS](#VERILOG_INCLUDE_DIRS)
