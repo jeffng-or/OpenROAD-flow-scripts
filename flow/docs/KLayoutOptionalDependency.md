@@ -11,8 +11,6 @@ without KLayout installed.
 |---|---|---|
 | `make finish` | No | Complete flow through timing reports |
 | `make gds` | Yes | Generate GDS/OAS from finished design |
-| `make do-finish` / `make do-final` | No | Same as `finish`, for bazel-orfs |
-| `make do-gds` | Yes | Same as `gds`, for bazel-orfs |
 | `make drc` | Yes | Run DRC checks (requires GDS) |
 | `make lvs` | Yes | Run LVS checks (requires GDS) |
 | `make gallery` | Yes | Generate layout screenshots |
@@ -26,19 +24,6 @@ missing and a KLayout-dependent target is invoked:
 Error: KLayout not found. Install KLayout or set KLAYOUT_CMD.
 Hint: 'make finish' works without KLayout. Only GDS/DRC/LVS need it.
 ```
-
-## Use Cases
-
-| Use Case | Needs KLayout? |
-|---|---|
-| Education / learning digital design | No |
-| Architectural exploration (PPA analysis) | No |
-| CI testing of ORFS / OpenROAD | No |
-| Local ORFS and OpenROAD development | No |
-| bazel-orfs default `orfs_flow()` | No |
-| GDS generation for tapeout | Yes |
-| DRC / LVS verification | Yes |
-| Layout visualization in KLayout GUI | Yes |
 
 ## bazel-orfs Integration
 
