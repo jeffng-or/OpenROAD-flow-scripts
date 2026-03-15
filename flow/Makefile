@@ -598,7 +598,8 @@ klayout_guides: $(RESULTS_DIR)/5_route.def $(OBJECTS_DIR)/klayout.lyt
 .PHONY: finish
 finish: $(LOG_DIR)/6_report.log \
         $(RESULTS_DIR)/6_final.v \
-        $(RESULTS_DIR)/6_final.sdc
+        $(RESULTS_DIR)/6_final.sdc \
+        $(GDS_FINAL_FILE)
 	$(UNSET_AND_MAKE) elapsed
 
 .PHONY: elapsed
@@ -650,7 +651,7 @@ clean_abstract:
 check-klayout:
 	@if [ -z "$(KLAYOUT_CMD)" ]; then \
 		echo "Error: KLayout not found. Install KLayout or set KLAYOUT_CMD."; \
-		echo "Hint: 'make finish' works without KLayout. Only GDS/DRC/LVS need it."; \
+		echo "Hint: KLayout is needed for GDS/DRC/LVS targets."; \
 		exit 1; \
 	fi
 

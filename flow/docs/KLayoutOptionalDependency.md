@@ -9,7 +9,7 @@ without KLayout installed.
 
 | Target | Requires KLayout | Description |
 |---|---|---|
-| `make finish` | No | Complete flow through timing reports |
+| `make finish` | Yes | Complete flow including GDS generation |
 | `make gds` | Yes | Generate GDS/OAS from finished design |
 | `make drc` | Yes | Run DRC checks (requires GDS) |
 | `make lvs` | Yes | Run LVS checks (requires GDS) |
@@ -22,7 +22,7 @@ missing and a KLayout-dependent target is invoked:
 
 ```
 Error: KLayout not found. Install KLayout or set KLAYOUT_CMD.
-Hint: 'make finish' works without KLayout. Only GDS/DRC/LVS need it.
+Hint: KLayout is needed for GDS/DRC/LVS targets.
 ```
 
 ## bazel-orfs Integration
