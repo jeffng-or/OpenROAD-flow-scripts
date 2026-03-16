@@ -28,10 +28,9 @@ Hint: KLayout is needed for GDS/DRC/LVS targets.
 ## bazel-orfs Integration
 
 bazel-orfs uses the `do-` prefixed targets which bypass Make's dependency
-management. The relevant targets follow the standard pattern:
-
-- `do-finish` / `do-final` — runs the finish stage without GDS
-- `do-gds` — runs GDS generation (requires KLayout)
+management. `do-finish` / `do-final` only run the finish stage recipe
+itself, while `make finish` also pulls in the GDS target as a Make
+dependency. `do-gds` runs GDS generation separately (requires KLayout).
 
 An `orfs_gds()` Bazel rule can call `do-gds` independently from
 `orfs_flow()`, making KLayout an optional toolchain dependency configured
@@ -58,17 +57,3 @@ These tests cover:
 - `.lyt` tech file generation (`test_generate_klayout_tech.py`)
 - DEF-to-GDS merging logic (`test_def2stream.py`)
 - DRC report conversion (`test_convertDrc.py`)
-
-## Future: OpenROAD `write_gds` and KLayout Coexistence
-
-OpenROAD has an unfinished `write_gds` command. When it is eventually
-completed, it would eliminate the KLayout dependency for GDS generation
-in many cases. However, KLayout support will live alongside `write_gds`
-until there is confidence that `write_gds` is robust and fully covers
-all current use cases.
-
-Even then, non-public or future PDKs may have requirements that benefit
-from KLayout's mature GDS handling. Whether KLayout support stays in
-ORFS indefinitely remains to be seen. Once `write_gds` works robustly
-for all of today's use cases, extending it to cover future ones may
-turn out to be straightforward.
