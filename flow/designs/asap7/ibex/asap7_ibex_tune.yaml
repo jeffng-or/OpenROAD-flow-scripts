@@ -9,4 +9,4 @@ run_config:
   ray_outputs_dir: /work
   orfs_outputs_dir: /work
 search_space:
-  file: /work/configs/asap7/ibex/autotuner_new.json
+  file: designs/asap7/ibex/autotuner_new.json
