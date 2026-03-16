@@ -1,5 +1,38 @@
 # Build from sources locally
 
+## Choose Your Build Path
+
+| Path | Prerequisites | sudo? | Best for |
+|------|--------------|-------|----------|
+| **Bazel** | [Bazelisk](https://bazel.build/install/bazelisk) | No | Most users |
+| **Nix** | [Nix](https://github.com/DeterminateSystems/nix-installer) | No | Nix users |
+| **CMake** | `sudo ./setup.sh` | Yes | Existing CMake developers |
+
+### Bazel (recommended)
+
+Install [Bazelisk](https://bazel.build/install/bazelisk) following the
+[official instructions](https://bazel.build/install/bazelisk).
+
+``` shell
+git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
+cd OpenROAD-flow-scripts
+bazelisk run //:install
+cd flow && make
+```
+
+For options: `bazelisk run //:install -- --help`
+
+### Nix
+
+``` shell
+git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
+cd OpenROAD-flow-scripts
+nix develop
+cd flow && make
+```
+
+### CMake (existing path)
+
 ## Clone and Install Dependencies
 
 The `setup.sh` script installs all of the dependencies, including OpenROAD dependencies, if they are not already installed.
@@ -11,23 +44,6 @@ git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scri
 cd OpenROAD-flow-scripts
 sudo ./setup.sh
 ```
-
-## Using Bazel to build OpenROAD and run the ORFS flow
-
-Long story short: OpenROAD will eventually switch to using Bazel for downloading dependencies and building OpenROAD for all the reasons that the DependencyInstaller.sh and cmake are hard to support and brittle across platforms.
-
-Currently the simplest way to build OpenROAD and run ORFS is to run one test, which will download all OpenROAD dependencies and build OpenROAD in the exec configuration:
-
-``` shell
-cd tools/OpenROAD
-bazelisk test src/drt/...
-cd ../../flow
-make OPENROAD_EXE=$(pwd)/../tools/OpenROAD/bazel-out/k8-opt-exec-ST-*/bin/openroad
-```
-
-Bazel could similarly be used to download and make available pre-built binaries for tools such as Yosys, eqy and KLayout.
-
-Running some quick tests will cause the desired exec config of OpenROAD to be built. There's no explicit Bazel way to build an exec config of an executable and we want to to use an exec config that is the same binary as is used for a local OpenROAD modify + test Bazel cycle.
 
 ## Build
 
@@ -72,34 +88,21 @@ Set up environment variables using `dev_env.sh`, then start Visual Studio Code. 
 code tools/OpenROAD/
 ```
 
-## Build OpenROAD and run a few ORFS flows with Bazel
+## Build and run ORFS flows with Bazel
 
-Local use case:
+ORFS uses [bazel-orfs](https://github.com/The-OpenROAD-Project/bazel-orfs) to run
+the flow entirely within Bazel. This is separate from `bazelisk run //:install` above
+which installs tools for the Makefile-based flow.
 
-- Install Bazelisk and no other dependencies, no need to run `sudo ./setup.sh`
-- Modify & build OpenROAD
-- Test built OpenROAD with a few ORFS flows
-
-The Bazel support in OpenROAD and ORFS is work in progress and some Bazel experience is recommended before going spelunking in the Bazel builds.
-
-Contributions welcome!
-
-To build `designs/asap7/gcd:gcd_floorplan`:
+To build a design with Bazel:
 
     cd flow
-    (cd ../tools/OpenROAD && bazel build :openroad -c opt) && bazelisk build designs/asap7/gcd:gcd_floorplan
+    bazelisk build designs/asap7/gcd:gcd_floorplan
 
-Or to run all flows currently available in Bazel
-
-    cd flow
-    (cd ../tools/OpenROAD && bazel build :openroad -c opt) && bazelisk build ...
-
-Note! ORFS uses the OpenROAD Bazel built binary in stop-gap way until OpenROAD has been switched to bzlmod, after which to build all flows becomes simpler as ORFS will build the requisite OpenROAD directly:
+Or to run all flows currently available in Bazel:
 
     cd flow
     bazelisk build ...
-
-ORFS uses [bazel-orfs](https://github.com/The-OpenROAD-Project/bazel-orfs) to implement the flow and gets some depedencies, like yosys, from the Docker image. Over time, all dependencies should be built with Bazel and the dependency on the ORFS Docker image will be phased out.
 
 ### Upgrading MODULE.bazel with the latest bazel-orfs and ORFS Docker image
 
