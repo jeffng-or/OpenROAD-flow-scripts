@@ -354,6 +354,11 @@ TIE_SEPARATION:
   stages:
     - floorplan
   default: 0
+UNSET_ABC9_BOX_CELLS:
+  description: |
+    List of cells to unset the abc9_box attribute on
+  stages:
+    - synth
 EARLY_SIZING_CAP_RATIO:
   description: |
     Ratio between the input pin capacitance and the output pin load during initial gate sizing.
