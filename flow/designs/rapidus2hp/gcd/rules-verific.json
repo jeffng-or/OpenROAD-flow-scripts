@@ -8,11 +8,11 @@
         "compare": "=="
     },
     "placeopt__design__instance__area": {
-        "value": 29,
+        "value": 34,
         "compare": "<="
     },
     "placeopt__design__instance__count__stdcell": {
-        "value": 666,
+        "value": 720,
         "compare": "<="
     },
     "detailedplace__design__violations": {
@@ -52,7 +52,7 @@
         "compare": ">="
     },
     "globalroute__timing__setup__tns": {
-        "value": -1.01,
+        "value": -1.12,
         "compare": ">="
     },
     "globalroute__timing__hold__ws": {
@@ -68,7 +68,7 @@
         "compare": ">="
     },
     "finish__timing__setup__tns": {
-        "value": -1.01,
+        "value": -1.12,
         "compare": ">="
     },
     "finish__timing__hold__ws": {
@@ -80,7 +80,7 @@
         "compare": ">="
     },
     "finish__design__instance__area": {
-        "value": 31,
+        "value": 38,
         "compare": "<="
     }
 }

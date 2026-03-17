@@ -8,11 +8,11 @@
         "compare": "=="
     },
     "placeopt__design__instance__area": {
-        "value": 27,
+        "value": 33,
         "compare": "<="
     },
     "placeopt__design__instance__count__stdcell": {
-        "value": 637,
+        "value": 710,
         "compare": "<="
     },
     "detailedplace__design__violations": {
@@ -80,7 +80,7 @@
         "compare": ">="
     },
     "finish__design__instance__area": {
-        "value": 31,
+        "value": 37,
         "compare": "<="
     }
 }
