@@ -1,14 +1,6 @@
 # Build from sources locally
 
-## Choose Your Build Path
-
-| Path | Prerequisites | sudo? | Best for |
-|------|--------------|-------|----------|
-| **CMake** | `sudo ./setup.sh` | Yes | Most users |
-| **Nix** | [Nix](https://github.com/DeterminateSystems/nix-installer) | No | Nix users |
-| **Bazel** | [Bazelisk](https://bazel.build/install/bazelisk) | No | ORFS/OpenROAD developers only, unsupported |
-
-### CMake
+## Clone and Install Dependencies
 
 The `setup.sh` script installs all of the dependencies, including OpenROAD dependencies, if they are not already installed.
 
@@ -18,26 +10,9 @@ Supported configurations are: Ubuntu 20.04, Ubuntu 22.04, Ubuntu 22.04(aarch64),
 git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
 cd OpenROAD-flow-scripts
 sudo ./setup.sh
-./build_openroad.sh --local
 ```
 
-:::{Note}
-There is a `build_openroad.log` file that is generated with every
-build in the main directory. In case of filing issues, it can be uploaded
-in the "Relevant log output" section of OpenROAD-flow-scripts repo
-[issue form](https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/issues/new?assignees=&labels=&template=bug_report_with_orfs.yml).
-:::
-
-### Nix
-
-``` shell
-git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
-cd OpenROAD-flow-scripts
-nix develop
-cd flow && make
-```
-
-### Bazel
+## Using Bazel to build OpenROAD and run the ORFS flow (unsupported)
 
 For ORFS/OpenROAD developers. Most of `./setup.sh` isn't needed when
 building OpenROAD with Bazel — this provides the bare minimum to build
@@ -51,10 +26,22 @@ bazelisk run //:install
 cd flow && make
 ```
 
+## Build
+
+``` shell
+./build_openroad.sh --local
+```
+:::{Note}
+There is a `build_openroad.log` file that is generated with every
+build in the main directory. In case of filing issues, it can be uploaded
+in the "Relevant log output" section of OpenROAD-flow-scripts repo
+[issue form](https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/issues/new?assignees=&labels=&template=bug_report_with_orfs.yml).
+:::
+
 ## Verify Installation
 
 The binaries should be available on your `$PATH` after setting
-up the environment. The `make` command runs from RTL-GDSII generation for default design `gcd` with `nangate45` PDK.
+up the environment. The `make` command runs from RTL-GDSII generation for default design `gcd` with `nangate45` PDK. 
 
 ``` shell
 source ./env.sh
@@ -82,21 +69,34 @@ Set up environment variables using `dev_env.sh`, then start Visual Studio Code. 
 code tools/OpenROAD/
 ```
 
-## Build and run ORFS flows with Bazel
+## Build OpenROAD and run a few ORFS flows with Bazel
 
-ORFS uses [bazel-orfs](https://github.com/The-OpenROAD-Project/bazel-orfs) to run
-the flow entirely within Bazel. This is separate from `bazelisk run //:install` above
-which installs tools for the Makefile-based flow.
+Local use case:
 
-To build a design with Bazel:
+- Install Bazelisk and no other dependencies, no need to run `sudo ./setup.sh`
+- Modify & build OpenROAD
+- Test built OpenROAD with a few ORFS flows
+
+The Bazel support in OpenROAD and ORFS is work in progress and some Bazel experience is recommended before going spelunking in the Bazel builds.
+
+Contributions welcome!
+
+To build `designs/asap7/gcd:gcd_floorplan`:
 
     cd flow
-    bazelisk build designs/asap7/gcd:gcd_floorplan
+    (cd ../tools/OpenROAD && bazel build :openroad -c opt) && bazelisk build designs/asap7/gcd:gcd_floorplan
 
-Or to run all flows currently available in Bazel:
+Or to run all flows currently available in Bazel
+
+    cd flow
+    (cd ../tools/OpenROAD && bazel build :openroad -c opt) && bazelisk build ...
+
+Note! ORFS uses the OpenROAD Bazel built binary in stop-gap way until OpenROAD has been switched to bzlmod, after which to build all flows becomes simpler as ORFS will build the requisite OpenROAD directly:
 
     cd flow
     bazelisk build ...
+
+ORFS uses [bazel-orfs](https://github.com/The-OpenROAD-Project/bazel-orfs) to implement the flow and gets some depedencies, like yosys, from the Docker image. Over time, all dependencies should be built with Bazel and the dependency on the ORFS Docker image will be phased out.
 
 ### Upgrading MODULE.bazel with the latest bazel-orfs and ORFS Docker image
 

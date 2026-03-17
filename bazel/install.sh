@@ -11,6 +11,40 @@ WORKSPACE="${BUILD_WORKSPACE_DIRECTORY:-.}"
 INSTALL_DIR="${WORKSPACE}/tools/install"
 NUM_THREADS=$(nproc)
 
+# --- Check system dependencies for yosys/slang builds ---
+check_deps() {
+    local missing_cmds=()
+
+    for cmd in bison flex gawk g++ pkg-config tclsh git cmake; do
+        if ! command -v "$cmd" &>/dev/null; then
+            missing_cmds+=("$cmd")
+        fi
+    done
+
+    if [[ ${#missing_cmds[@]} -eq 0 ]]; then
+        return
+    fi
+
+    echo "ERROR: Missing commands: ${missing_cmds[*]}"
+    echo ""
+
+    # Platform-specific install hint
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        echo "  brew install bison flex gawk cmake pkg-config tcl-tk"
+    elif command -v apt-get &>/dev/null; then
+        echo "  sudo apt-get install bison flex gawk g++ pkg-config tcl cmake git"
+    elif command -v dnf &>/dev/null; then
+        echo "  sudo dnf install bison flex gawk gcc-c++ pkgconf tcl cmake git"
+    elif command -v yum &>/dev/null; then
+        echo "  sudo yum install bison flex gawk gcc-c++ pkgconf tcl cmake git"
+    elif command -v zypper &>/dev/null; then
+        echo "  sudo zypper install bison flex gawk gcc-c++ pkg-config tcl cmake git"
+    fi
+    exit 1
+}
+
+check_deps
+
 BUILD_OPENROAD=1
 
 usage() {
