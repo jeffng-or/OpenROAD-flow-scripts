@@ -3,7 +3,25 @@ proc write_lec_verilog { filename } {
   if { [env_var_exists_and_non_empty REMOVE_CELLS_FOR_LEC] } {
     lappend remove_cells {*}$::env(REMOVE_CELLS_FOR_LEC)
   }
-  write_verilog -remove_cells $remove_cells $::env(RESULTS_DIR)/$filename
+  set out_file $::env(RESULTS_DIR)/$filename
+  write_verilog -remove_cells $remove_cells $out_file
+
+  # Add auxiliary Verilog files (e.g., blackbox stubs) for LEC
+  if { [env_var_exists_and_non_empty LEC_AUX_VERILOG_FILES] } {
+    set out [open $out_file a]
+    foreach aux_file $::env(LEC_AUX_VERILOG_FILES) {
+      if { ![file exists $aux_file] } {
+        close $out
+        error "LEC auxiliary Verilog file not found: $aux_file"
+      }
+      puts $out "\n// ORFS auxiliary Verilog for Kepler LEC: $aux_file"
+      set in [open $aux_file r]
+      fcopy $in $out
+      close $in
+      puts $out ""
+    }
+    close $out
+  }
 }
 
 proc write_lec_script { step file1 file2 } {
