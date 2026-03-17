@@ -1,32 +1,21 @@
 #!/bin/bash
 set -e
 
-# ORFS install script
-# Single user-facing entry point: bazelisk run //:install
+# ORFS developer install script
+# Builds and installs OpenROAD, Yosys, and yosys-slang to tools/install/
+# where flow/Makefile expects them.
 #
-# Builds and installs tools to tools/install/ where flow/Makefile expects them.
 # Uses stamp files for fast no-op re-runs (seconds when nothing changed).
 
 WORKSPACE="${BUILD_WORKSPACE_DIRECTORY:-.}"
 INSTALL_DIR="${WORKSPACE}/tools/install"
 NUM_THREADS=$(nproc)
 
+BUILD_OPENROAD=1
+
 usage() {
     cat <<'EOF'
 Usage: bazelisk run //:install [-- OPTIONS]
-
-Installs tools required for the ORFS flow/Makefile.
-
-Installed:
-  openroad      OpenROAD with GUI support
-  yosys         Yosys synthesis tool
-  yosys-slang   Yosys SystemVerilog plugin
-
-Not yet supported (use sudo ./setup.sh):
-  klayout       KLayout layout viewer
-  kepler        Kepler formal verification
-
-Nix users: nix develop already provides all tools. See flake.nix.
 
 Options:
   --help, -h        Show this help
@@ -35,52 +24,6 @@ Options:
 EOF
     exit 0
 }
-
-# Check for required system dependencies before expensive builds.
-# ORFS checks deps for what it builds (yosys/slang). OpenROAD checks
-# its own deps in tools/OpenROAD/bazel/install.sh (separation of concerns).
-#
-# Currently only Ubuntu/Debian is checked. Dependency checking for
-# other platforms (macOS, RHEL, Fedora, etc.) is not implemented
-# because we cannot test them. Contributions welcome.
-check_ubuntu_deps() {
-    local missing_cmds=()
-    local missing_pkgs=()
-
-    # Commands needed for yosys build
-    command -v bison   &>/dev/null || { missing_cmds+=(bison);   missing_pkgs+=(bison); }
-    command -v flex    &>/dev/null || { missing_cmds+=(flex);    missing_pkgs+=(flex); }
-    command -v gawk    &>/dev/null || { missing_cmds+=(gawk);    missing_pkgs+=(gawk); }
-    command -v g++     &>/dev/null || { missing_cmds+=(g++);     missing_pkgs+=(g++); }
-    command -v pkg-config &>/dev/null || { missing_cmds+=(pkg-config); missing_pkgs+=(pkg-config); }
-    command -v tclsh   &>/dev/null || { missing_cmds+=(tclsh);   missing_pkgs+=(tcl); }
-    command -v git     &>/dev/null || { missing_cmds+=(git);     missing_pkgs+=(git); }
-    command -v cmake   &>/dev/null || { missing_cmds+=(cmake);   missing_pkgs+=(cmake); }
-
-    # Dev libraries needed for yosys/slang compilation (check via dpkg)
-    for pkg in tcl-dev libffi-dev libreadline-dev zlib1g-dev; do
-        if ! dpkg -s "$pkg" &>/dev/null 2>&1; then
-            missing_pkgs+=("$pkg")
-        fi
-    done
-
-    if [[ ${#missing_pkgs[@]} -gt 0 ]]; then
-        echo "ERROR: Missing dependencies for Yosys build."
-        if [[ ${#missing_cmds[@]} -gt 0 ]]; then
-            echo "  Missing commands: ${missing_cmds[*]}"
-        fi
-        echo ""
-        echo "On Ubuntu this would be:"
-        echo "  sudo apt install ${missing_pkgs[*]}"
-        exit 1
-    fi
-}
-
-if command -v dpkg &>/dev/null; then
-    check_ubuntu_deps
-fi
-
-BUILD_OPENROAD=1
 
 while [[ $# -gt 0 ]]; do
     case "$1" in

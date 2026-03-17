@@ -4,23 +4,29 @@
 
 | Path | Prerequisites | sudo? | Best for |
 |------|--------------|-------|----------|
-| **Bazel** | [Bazelisk](https://bazel.build/install/bazelisk) | No | Most users |
+| **CMake** | `sudo ./setup.sh` | Yes | Most users |
 | **Nix** | [Nix](https://github.com/DeterminateSystems/nix-installer) | No | Nix users |
-| **CMake** | `sudo ./setup.sh` | Yes | Existing CMake developers |
+| **Bazel** | [Bazelisk](https://bazel.build/install/bazelisk) | No | ORFS/OpenROAD developers only, unsupported |
 
-### Bazel (recommended)
+### CMake
 
-Install [Bazelisk](https://bazel.build/install/bazelisk) following the
-[official instructions](https://bazel.build/install/bazelisk).
+The `setup.sh` script installs all of the dependencies, including OpenROAD dependencies, if they are not already installed.
+
+Supported configurations are: Ubuntu 20.04, Ubuntu 22.04, Ubuntu 22.04(aarch64), RHEL 8, RockyLinux 9 and Debian 11.
 
 ``` shell
 git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
 cd OpenROAD-flow-scripts
-bazelisk run //:install
-cd flow && make
+sudo ./setup.sh
+./build_openroad.sh --local
 ```
 
-For options: `bazelisk run //:install -- --help`
+:::{Note}
+There is a `build_openroad.log` file that is generated with every
+build in the main directory. In case of filing issues, it can be uploaded
+in the "Relevant log output" section of OpenROAD-flow-scripts repo
+[issue form](https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/issues/new?assignees=&labels=&template=bug_report_with_orfs.yml).
+:::
 
 ### Nix
 
@@ -31,36 +37,24 @@ nix develop
 cd flow && make
 ```
 
-### CMake (existing path)
+### Bazel
 
-## Clone and Install Dependencies
-
-The `setup.sh` script installs all of the dependencies, including OpenROAD dependencies, if they are not already installed.
-
-Supported configurations are: Ubuntu 20.04, Ubuntu 22.04, Ubuntu 22.04(aarch64), RHEL 8, RockyLinux 9 and Debian 11.
+For ORFS/OpenROAD developers. Most of `./setup.sh` isn't needed when
+building OpenROAD with Bazel — this provides the bare minimum to build
+OpenROAD and test ORFS flows. No sudo required.
+Install [Bazelisk](https://bazel.build/install/bazelisk) first.
 
 ``` shell
 git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
 cd OpenROAD-flow-scripts
-sudo ./setup.sh
+bazelisk run //:install
+cd flow && make
 ```
-
-## Build
-
-``` shell
-./build_openroad.sh --local
-```
-:::{Note}
-There is a `build_openroad.log` file that is generated with every
-build in the main directory. In case of filing issues, it can be uploaded
-in the "Relevant log output" section of OpenROAD-flow-scripts repo
-[issue form](https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/issues/new?assignees=&labels=&template=bug_report_with_orfs.yml).
-:::
 
 ## Verify Installation
 
 The binaries should be available on your `$PATH` after setting
-up the environment. The `make` command runs from RTL-GDSII generation for default design `gcd` with `nangate45` PDK. 
+up the environment. The `make` command runs from RTL-GDSII generation for default design `gcd` with `nangate45` PDK.
 
 ``` shell
 source ./env.sh
