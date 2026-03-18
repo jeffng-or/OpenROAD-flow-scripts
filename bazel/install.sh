@@ -49,7 +49,7 @@ BUILD_OPENROAD=1
 
 usage() {
     cat <<'EOF'
-Usage: bazelisk run //:install [-- OPTIONS]
+Usage: bazelisk run //:install_for_bazel [-- OPTIONS]
 
 Options:
   --help, -h        Show this help

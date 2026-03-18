@@ -22,7 +22,7 @@ Install [Bazelisk](https://bazel.build/install/bazelisk) first.
 ``` shell
 git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts
 cd OpenROAD-flow-scripts
-bazelisk run //:install
+bazelisk run //:install_for_bazel
 cd flow && make
 ```
 
