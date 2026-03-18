@@ -148,7 +148,3 @@ export SYNTH_CANONICALIZE_TCL = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NAME)/canoni
 
 export SWAP_ARITH_OPERATORS = 1
 export OPENROAD_HIERARCHICAL = 1
-
-# Disable KF LEC: assertion crash in SNLLogicCloud.cpp:349
-# "Iso have no drivers and more than one reader, not supported"
-export LEC_CHECK = 0
