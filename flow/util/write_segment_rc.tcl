@@ -40,8 +40,10 @@ proc fetch_segments_rc { net_to_segments_var } {
       set height [$shape getDY]
       set length_um [ord::dbu_to_microns [expr { max($width, $height) }]]
 
-      set resistance [$rseg getResistance 0]
-      set capacitance [$rseg getCapacitance 0]
+      # Default corner
+      set corner 0
+      set resistance [$rseg getResistance $corner]
+      set capacitance [$rseg getTotalCapacitance $corner]
 
       lappend segments $layer $length_um $resistance $capacitance
       lappend seen_shape_ids $shape_id
