@@ -8,7 +8,6 @@ set -ex
 # Options:
 #   -i, --image IMAGE Docker image (overrides $OR_IMAGE and default)
 #   --user            Map host UID/GID into the container via entrypoint.sh
-#   --orfs-flow       Mount pwd to /OpenROAD-flow-scripts/flow instead of /work
 #   -p, --port SPEC   Forward a port, e.g. --port 8265:8265 (repeatable)
 #   --dry-run         Print the docker command without executing it
 #   -h|--help         Show this help and exit
@@ -32,7 +31,7 @@ get_container_engine () {
 }
 
 DEFAULT_IMAGE="openroad/orfs:latest"
-MOUNT_TARGET="/work"
+FLOW_DIR="/OpenROAD-flow-scripts/flow"
 USE_USER=false
 DRY_RUN=false
 PORTS=()
@@ -48,7 +47,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -i|--image)  IMAGE="$2"; shift 2 ;;
         --user)      USE_USER=true; shift ;;
-        --orfs-flow) MOUNT_TARGET="/OpenROAD-flow-scripts/flow"; shift ;;
         -p|--port)   PORTS+=("$2"); shift 2 ;;
         --dry-run)   DRY_RUN=true; shift ;;
         -h|--help)   usage ;;
@@ -99,11 +97,7 @@ done
 CMD_STR=
 [[ ${#CMD_ARGS[@]} -gt 0 ]] && CMD_STR="${CMD_ARGS[*]}"
 
-# Source env.sh only when mounting to ORFS flow dir (adds OR tools to PATH).
-# AutoTuner images install binaries in /usr/local/bin so env.sh is not needed
-# and would error out if absent.
-ENV_SH_CMD=
-[[ "$MOUNT_TARGET" == "/OpenROAD-flow-scripts/flow" ]] && ENV_SH_CMD=". ../env.sh;"
+ENV_SH_CMD='if [ -f ../env.sh ]; then . ../env.sh; fi;'
 
 # Build the command once; dry-run prints it, otherwise exec it.
 DOCKER_CMD=(
@@ -119,14 +113,15 @@ DOCKER_CMD=(
     -v "$XAUTH:$XAUTH"
     -e "XAUTHORITY=$XAUTH"
     -e FLOW_HOME=/OpenROAD-flow-scripts/flow/
+    -e WORK_HOME=/work
     -e "YOSYS_EXE=$YOSYS_EXE"
     -e "OPENROAD_EXE=$OPENROAD_EXE"
     -e "KLAYOUT_CMD=$KLAYOUT_CMD"
-    -v "$WORKSPACE:${MOUNT_TARGET}"
+    -v "$WORKSPACE:/work"
     --network host
     "${PORT_ARGS[@]}"
     "$IMAGE"
-    bash -c "set -ex; mkdir /tmp/xdg-run; cd ${MOUNT_TARGET}; ${ENV_SH_CMD}$CMD_STR"
+    bash -c "set -ex; mkdir /tmp/xdg-run; cd ${FLOW_DIR}; ${ENV_SH_CMD}$CMD_STR"
 )
 
 if $DRY_RUN; then
