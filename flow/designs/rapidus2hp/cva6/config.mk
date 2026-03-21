@@ -148,7 +148,3 @@ export SYNTH_CANONICALIZE_TCL = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NAME)/canoni
 
 export SWAP_ARITH_OPERATORS = 1
 export OPENROAD_HIERARCHICAL = 1
-
-# Disable KF LEC: netlist loading failure
-# bus net "icache_areq_o" cannot be found in ALU module
-export LEC_CHECK = 0
