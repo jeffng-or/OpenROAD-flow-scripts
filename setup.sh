@@ -5,18 +5,12 @@ set -euo pipefail
 # allow this script to be invoked from any folder
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# macOS detection
-IS_DARWIN=false
-if [[ "$(uname)" == "Darwin" ]]; then
-  IS_DARWIN=true
-fi
-
-if $IS_DARWIN && [[ $EUID -eq 0 ]]; then
+if [[ "$OSTYPE" == "darwin"* ]] && [[ $EUID -eq 0 ]]; then
   echo "Do NOT run this script with sudo on macOS"
   exit 1
 fi
 
-if ! $IS_DARWIN && [[ $EUID -ne 0 ]]; then
+if [[ "$OSTYPE" != "darwin"* ]] && [[ $EUID -ne 0 ]]; then
   echo "This script must be run with sudo on Linux"
   exit 1
 fi
@@ -28,7 +22,7 @@ tmpfile=$(mktemp)
 git submodule status --recursive > "$tmpfile"
 
 if grep -q "^-" "$tmpfile"; then
-  if $IS_DARWIN; then
+  if [[ "$OSTYPE" == "darwin"* ]]; then
     git submodule update --init --recursive
   else
     sudo -u $SUDO_USER git submodule update --init --recursive
@@ -42,7 +36,7 @@ elif grep -q "^+" "$tmpfile"; then
 fi
 
 "$DIR/etc/DependencyInstaller.sh" -base
-if $IS_DARWIN; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
   "$DIR/etc/DependencyInstaller.sh" -common -prefix="$DIR/dependencies"
 else
   sudo -u $SUDO_USER "$DIR/etc/DependencyInstaller.sh" -common -prefix="$DIR/dependencies"
