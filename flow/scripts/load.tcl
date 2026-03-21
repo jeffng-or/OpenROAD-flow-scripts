@@ -32,7 +32,7 @@ proc load_design { design_file sdc_file } {
   }
 
   # Read SDC file
-  read_sdc $::env(RESULTS_DIR)/$sdc_file
+  log_cmd read_sdc $::env(RESULTS_DIR)/$sdc_file
 
   if { [file exists $::env(PLATFORM_DIR)/derate.tcl] } {
     log_cmd source $::env(PLATFORM_DIR)/derate.tcl
