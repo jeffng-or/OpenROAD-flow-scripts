@@ -12,7 +12,7 @@ fi
 # package versions
 klayoutVersion=0.30.3
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    numThreads=$(sysctl -n hw.ncpu)
+    numThreads=$(sysctl -n hw.logicalcpu)
 else
     numThreads=$(nproc)
 fi
