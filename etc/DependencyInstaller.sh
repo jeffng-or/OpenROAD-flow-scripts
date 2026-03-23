@@ -11,7 +11,11 @@ fi
 
 # package versions
 klayoutVersion=0.30.3
-numThreads=$(nproc)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    numThreads=$(sysctl -n hw.ncpu)
+else
+    numThreads=$(nproc)
+fi
 
 _versionCompare() {
     local a b IFS=. ; set -f
