@@ -98,6 +98,7 @@ stack_line = None
 layer_segments = defaultdict(
     lambda: {"lengths": [], "resistances": [], "capacitances": []}
 )
+layer_net_type_length = defaultdict(lambda: defaultdict(float))
 routing_layers = []
 routing_layers_line = None
 
@@ -150,6 +151,7 @@ for rc_file in args.rc_file:
                 layer_segments[tokens[2]]["lengths"].append(float(tokens[3]))
                 layer_segments[tokens[2]]["resistances"].append(float(tokens[4]))
                 layer_segments[tokens[2]]["capacitances"].append(float(tokens[5]))
+                layer_net_type_length[tokens[2]][tokens[1]] += float(tokens[3])
             else:
                 netName = tokens[0]
 
@@ -372,6 +374,9 @@ if args.mode == "net":
 if args.mode == "segment":
     print("\nUnits: resistance [{}/um], capacitance [{}/um]".format(res_unit, cap_unit))
 
+    # Note that the .csv data comes from ODB which stores capacitance in fF.
+    cap_ff_to_f = 1e-15
+
     layer_models = {}
     for layer_name in routing_layers:
         # There may be routing layers with no segments, so we check if the
@@ -422,7 +427,57 @@ if args.mode == "segment":
             "set_layer_rc -layer {} -resistance {:.5E} -capacitance {:.5E}".format(
                 layer_name,
                 res_model.coef_[0] / res_scale,
-                cap_model.coef_[0] * 1e-15 / cap_scale,
+                cap_model.coef_[0] * cap_ff_to_f / cap_scale,
+            )
+        )
+    print("")
+
+    def wire_rc_fit(target_net_type=None):
+        total_length = 0.0
+        total_resistance = 0.0
+        total_capacitance = 0.0
+
+        for layer_name, (res_model, cap_model, lengths, _, _) in layer_models.items():
+            if target_net_type is not None:
+                layer_length = sum(
+                    layer_net_type_length[layer_name][net_type]
+                    for net_type in target_net_type
+                )
+            else:
+                layer_length = float(lengths.sum())
+
+            total_resistance += res_model.coef_[0] * layer_length
+            total_capacitance += cap_model.coef_[0] * layer_length
+            total_length += layer_length
+
+        if total_length == 0.0:
+            return None
+
+        return (
+            total_resistance / total_length / res_scale,
+            total_capacitance / total_length * cap_ff_to_f / cap_scale,
+        )
+
+    resistance, capacitance = wire_rc_fit()
+
+    print(
+        "set_wire_rc -resistance {:.5E} -capacitance {:.5E}".format(
+            resistance, capacitance
+        )
+    )
+
+    for net_type in ["signal", "clock"]:
+        result = wire_rc_fit([net_type])
+
+        if result is None:
+            print("[Warning] No {} nets were found.".format(net_type))
+            continue
+
+        resistance, capacitance = result
+
+        print(
+            "set_wire_rc -{} -resistance {:.5E} -capacitance {:.5E}".format(
+                net_type, resistance, capacitance
             )
         )
     print("")
