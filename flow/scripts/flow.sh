@@ -8,7 +8,7 @@ echo "Running $2.tcl, stage $1"
 (
   trap 'mv "$LOG_DIR/$1.tmp.log" "$LOG_DIR/$1.log"' EXIT
 
-  "$OPENROAD_EXE" $OPENROAD_ARGS -exit "$SCRIPTS_DIR/noop.tcl" \
+  eval "$OPENROAD_EXE $OPENROAD_ARGS -exit \"$SCRIPTS_DIR/noop.tcl\"" \
     >"$LOG_DIR/$1.tmp.log" 2>&1
 
   eval "$TIME_CMD $OPENROAD_CMD -no_splash \"$SCRIPTS_DIR/$2.tcl\" -metrics \"$LOG_DIR/$1.json\"" \
