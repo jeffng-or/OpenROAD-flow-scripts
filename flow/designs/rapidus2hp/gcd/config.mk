@@ -10,22 +10,20 @@ export VERILOG_FILES = $(DESIGN_HOME)/src/$(DESIGN_NAME)/gcd.v
 export SDC_FILE    = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NAME)/constraint.sdc
 
 # Use $(if) to defer conditional eval until all makefiles are read
-#
-# | PDK  | Place Site | Utilization |
-# | ---- | ---------- | ----------- |
-# | 0.2  |     6T     |      43     |
-# | 0.2  |     8T     |      45     |
-# | 0.2a |     6T     |      43     |
-# | 0.2a |     8T     |      45     |
-# | 0.15 |     6T     |      38     |
-# | 0.15 |     8T     |      40     |
-#
-export CORE_UTILIZATION = $(strip $(if $(filter 0.15,$(RAPIDUS_PDK_VERSION)), \
-	$(if $(filter ra02h138_DST_45CPP,$(PLACE_SITE)), \
-		36, \
-		40), \
-	$(if $(filter ra02h138_DST_45CPP SC6T,$(PLACE_SITE)), \
-		43, \
-		45)))
+export CORE_UTILIZATION = $(strip \
+    $(if $(filter 0.15,$(RAPIDUS_PDK_VERSION)), \
+        $(if $(filter ra02h138_DST_45CPP,$(PLACE_SITE)), \
+	    36, \
+	    40), \
+        $(if $(filter 0.3,$(RAPIDUS_PDK_VERSION)), \
+            $(if $(filter ra02h138_DST_45CPP,$(PLACE_SITE)), \
+	        36, \
+	        42), \
+	    $(if $(filter ra02h138_DST_45CPP SC6T,$(PLACE_SITE)), \
+	        43, \
+	        45 \
+            ) \
+        ) \
+    ))
 
 export CORE_MARGIN = .5

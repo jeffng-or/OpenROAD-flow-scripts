@@ -14,7 +14,9 @@ export VERILOG_INCLUDE_DIRS   = $(DESIGN_HOME)/src/$(DESIGN_NICKNAME)/include
 ._0P2A_8T_SDC_FILE = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/jpeg_encoder15_0.2a_8T.sdc
 ._0P15_6T_SDC_FILE = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/jpeg_encoder15_0.15_6T.sdc
 ._0P15_8T_SDC_FILE = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/jpeg_encoder15_0.15_8T.sdc
-._0P3S_SDC_FILE     = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/jpeg_encoder15_0.3s.sdc
+._0P3S_SDC_FILE    = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/jpeg_encoder15_0.3s.sdc
+._0P3_6T_SDC_FILE  = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/jpeg_encoder15_0.3_6T.sdc
+._0P3_8T_SDC_FILE  = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/jpeg_encoder15_0.3_8T.sdc
 
 # Use $(if) to defer conditional eval until all makefiles are read
 export SDC_FILE = $(strip \
@@ -27,14 +29,25 @@ export SDC_FILE = $(strip \
             ), \
             $(if $(filter 0.3s,$(RAPIDUS_PDK_VERSION)), \
                 $(._0P3S_SDC_FILE), \
-                $(.DEFAULT_SDC_FILE) \
+	        $(if $(filter 0.3,$(RAPIDUS_PDK_VERSION)), \
+	            $(if $(filter ra02h138_DST_45CPP,$(PLACE_SITE)), \
+	            	$(._0P3_6T_SDC_FILE), \
+	            	$(._0P3_8T_SDC_FILE) \
+		    ), \
+                    $(.DEFAULT_SDC_FILE) \
+	        ) \
             ) \
         ) \
     ))
 
 export ABC_AREA               = 1
 
-export CORE_UTILIZATION       = 60
+export CORE_UTILIZATION = $(strip \
+    $(if $(filter 0.3,$(RAPIDUS_PDK_VERSION)), \
+	62, \
+	60 \
+    ))
+
 export CORE_ASPECT_RATIO      = 1
 export CORE_MARGIN            = 0.75
 
