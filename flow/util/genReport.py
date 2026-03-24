@@ -170,7 +170,7 @@ def gen_report(name, data):
             args.verbose - 2,
         )
 
-    if len(d["drcs"].keys()) > 0:
+    if len(data["drcs"].keys()) > 0:
         if data["status"] == STATUS_GREEN:
             output += "  Design has the violations under the allowed limit: "
         else:

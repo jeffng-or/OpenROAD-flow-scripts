@@ -3,7 +3,7 @@
 proc fetch_segments_rc { net_to_segments_var } {
   upvar 1 $net_to_segments_var net_to_segments
 
-  foreach sta_net [get_nets *] {
+  foreach sta_net [get_nets -hierarchical *] {
     set db_net [sta::sta_to_db_net $sta_net]
     set type [$db_net getSigType]
 
@@ -69,7 +69,7 @@ proc write_segment_rc_csv { filename net_to_segments_var } {
   puts $stream ""
 
   # Then, write the parasitics data of each wire segment.
-  foreach sta_net [get_nets *] {
+  foreach sta_net [get_nets -hierarchical *] {
     set net_name [get_full_name $sta_net]
 
     if { ![info exists net_to_segments($net_name)] } {
