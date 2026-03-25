@@ -199,8 +199,6 @@ _installUbuntuPackages() {
     # install KLayout
     if  [[ $1 == "rodete" ]]; then
         apt-get -y install --no-install-recommends klayout python3-pandas
-    elif _versionCompare "$1" -ge 23.04; then
-        apt-get -y install --no-install-recommends klayout python3-pandas
     else
         arch=$(uname -m)
         lastDir="$(pwd)"
@@ -227,7 +225,7 @@ _installUbuntuPackages() {
             elif [[ $1 == 24.04 ]]; then
                 klayoutChecksum=145adaa044101bb41179aa63ec6d7f86
             else
-                echo "Unrecognized version of Ubuntu $1. Please install KLayout manually"
+                echo "Unsupported Ubuntu version $1. Supported versions: 20.04, 22.04, 24.04. Please upgrade to a supported LTS release or install KLayout ${klayoutVersion} manually from https://www.klayout.org/build.html"
                 exit 1
             fi
             wget https://www.klayout.org/downloads/Ubuntu-${1%.*}/klayout_${klayoutVersion}-1_amd64.deb
