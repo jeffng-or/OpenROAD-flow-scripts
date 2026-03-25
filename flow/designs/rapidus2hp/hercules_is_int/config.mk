@@ -20,7 +20,13 @@ export VERILOG_INCLUDE_DIRS   = $(SRC_HOME)/hercules_issue/verilog \
 	$(SRC_HOME)/shared/verilog \
 	$(SRC_HOME)/models/cells/generic
 
-export SDC_FILE               = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NAME)/prects.sdc
+.DEFAULT_SDC_FILE = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/prects.sdc
+._0P3_SDC_FILE    = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)/prects_0.3.sdc
+export SDC_FILE = $(strip \
+    $(if $(filter 0.3,$(RAPIDUS_PDK_VERSION)), \
+	$(._0P3_SDC_FILE), \
+	$(.DEFAULT_SDC_FILE) \
+    ))
 
 # Must be defined before the ifeq's
 export SYNTH_HDL_FRONTEND    ?= slang
@@ -50,14 +56,23 @@ export CORE_UTILIZATION = $(strip \
                 30, \
                 52 \
             ), \
-            $(if $(filter slang,$(SYNTH_HDL_FRONTEND)), \
+            $(if $(filter 0.3,$(RAPIDUS_PDK_VERSION)), \
                 $(if $(filter ra02h138_DST_45CPP SC6T,$(PLACE_SITE)), \
-                    30, \
-                    52 \
-                ), \
-	        $(if $(filter ra02h138_DST_45CPP SC6T,$(PLACE_SITE)), \
-                    30, \
-                    54 \
+		    52, \
+                    $(if $(filter slang,$(SYNTH_HDL_FRONTEND)), \
+                        65, \
+		        63 \
+                    ) \
+		), \
+                $(if $(filter slang,$(SYNTH_HDL_FRONTEND)), \
+                    $(if $(filter ra02h138_DST_45CPP SC6T,$(PLACE_SITE)), \
+                        30, \
+                        52 \
+                    ), \
+	            $(if $(filter ra02h138_DST_45CPP SC6T,$(PLACE_SITE)), \
+                        30, \
+                        54 \
+                    ) \
                 ) \
             ) \
         ) \
