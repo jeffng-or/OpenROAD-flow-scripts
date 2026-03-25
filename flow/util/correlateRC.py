@@ -73,7 +73,7 @@ elif res_unit == "kohm":
     res_scale = 1e3
 else:
     print("unknown resistance unit")
-    exit
+    exit(1)
 
 cap_unit = args.cap_unit
 if cap_unit == "ff":
@@ -82,7 +82,7 @@ elif cap_unit == "pf":
     cap_scale = 1e-12
 else:
     print("unknown capacitance unit")
-    exit
+    exit(1)
 
 
 def makeDict():
