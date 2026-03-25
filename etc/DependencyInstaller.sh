@@ -10,7 +10,7 @@ else
 fi
 
 # package versions
-klayoutVersion=0.30.3
+klayoutVersion=0.30.7
 if [[ "$OSTYPE" == "darwin"* ]]; then
     numThreads=$(sysctl -n hw.logicalcpu)
 else
