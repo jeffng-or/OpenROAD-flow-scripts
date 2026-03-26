@@ -175,10 +175,11 @@ def read_sdc(file_name):
 
 def is_git_repo(folder=None):
     cmd = ["git", "branch"]
-    if folder is not None:
-        return call(cmd, stderr=STDOUT, stdout=open(os.devnull, "w"), cwd=folder) == 0
-    else:
-        return call(cmd, stderr=STDOUT, stdout=open(os.devnull, "w")) == 0
+    with open(os.devnull, "w") as devnull:
+        if folder is not None:
+            return call(cmd, stderr=STDOUT, stdout=devnull, cwd=folder) == 0
+        else:
+            return call(cmd, stderr=STDOUT, stdout=devnull) == 0
 
 
 def merge_jsons(root_path, output, files):
