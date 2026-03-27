@@ -11,7 +11,6 @@ fi
 
 # package versions
 klayoutVersion=0.30.3
-verilatorVersion=5.026
 numThreads=$(nproc)
 
 _versionCompare() {
@@ -35,34 +34,6 @@ _installPipCommon() {
         pip3 install --no-cache-dir -U $pkgs
     else
         pip3 install --no-cache-dir --user -U $pkgs
-    fi
-}
-
-_installVerilator() {
-    local baseDir
-    if [[ "$constantBuildDir" == "true" ]]; then
-        baseDir="/tmp/DependencyInstaller-ORFS"
-        if [[ -d "$baseDir" ]]; then
-            echo "[INFO] Removing old building directory $baseDir"
-        fi
-        mkdir -p "$baseDir"
-    else
-        baseDir=$(mktemp -d /tmp/DependencyInstaller-orfs-XXXXXX)
-    fi
-
-    # Install Verilator
-    verilatorPrefix=`realpath ${PREFIX:-"/usr/local"}`
-    if [[ ! -x ${verilatorPrefix}/bin/verilator ]]; then
-        pushd $baseDir
-            git clone --depth=1 -b "v$verilatorVersion" https://github.com/verilator/verilator.git
-            pushd verilator
-                autoconf
-                ./configure --prefix "${verilatorPrefix}"
-                make -j "${numThreads}"
-                make install
-            popd
-            rm -r verilator
-        popd
     fi
 }
 
@@ -286,7 +257,7 @@ _installUbuntuPackages() {
 
 _installDarwinPackages() {
     brew install libffi tcl-tk ruby
-    brew install python libomp
+    brew install python libomp doxygen capnp tbb bison flex boost spdlog zlib
     brew link --force libomp
     brew install --cask klayout
     brew install docker docker-buildx
@@ -300,7 +271,10 @@ _installCI() {
         coreutils \
         curl \
         python3 \
-        software-properties-common
+        software-properties-common \
+        clang pkg-config \
+        libboost-dev libfl-dev libtbb-dev capnproto libcapnp-dev \
+        libgtest-dev libspdlog-dev libfmt-dev libboost-iostreams-dev zlib1g-dev
 }
 
 _help() {
@@ -472,7 +446,6 @@ case "${os}" in
         
         if [[ "${option}" == "common" || "${option}" == "all" ]]; then
             _installPipCommon
-            _installVerilator
         fi
         ;;
     "Ubuntu" | "Debian GNU/Linux rodete" )
@@ -494,7 +467,6 @@ case "${os}" in
                 if _versionCompare ${version} -lt 23.04 ; then
                     _installPipCommon
                 fi
-                _installVerilator
             else
                 echo "Skip common for rodete"
             fi
@@ -510,7 +482,6 @@ case "${os}" in
         fi
         if [[ "${option}" == "common" || "${option}" == "all" ]]; then
             _installPipCommon
-            _installVerilator
         fi
         ;;
     *)
