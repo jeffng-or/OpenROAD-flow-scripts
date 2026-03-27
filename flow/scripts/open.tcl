@@ -34,7 +34,11 @@ proc read_timing { input_file } {
     source $::env(PLATFORM_DIR)/derate.tcl
   }
 
-  source $::env(PLATFORM_DIR)/setRC.tcl
+  if { [env_var_exists_and_non_empty LAYER_PARASITICS_FILE] } {
+    log_cmd source $::env(LAYER_PARASITICS_FILE)
+  } else {
+    log_cmd source $::env(PLATFORM_DIR)/setRC.tcl
+  }
   if { $design_stage >= 4 } {
     # CTS has run, so propagate clocks
     set_propagated_clock [all_clocks]
@@ -47,7 +51,6 @@ proc read_timing { input_file } {
       log_cmd estimate_parasitics -global_routing
     } else {
       puts "No global routing results available, skipping estimate_parasitics"
-      puts "Load $::global_route_congestion_report for details"
     }
   } elseif { $design_stage >= 3 } {
     log_cmd estimate_parasitics -placement
