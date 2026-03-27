@@ -1,6 +1,6 @@
 {
     "synth__design__instance__area__stdcell": {
-        "value": 1030.0,
+        "value": 1020.0,
         "compare": "<="
     },
     "constraints__clocks__count": {
@@ -8,11 +8,11 @@
         "compare": "=="
     },
     "placeopt__design__instance__area": {
-        "value": 1237,
+        "value": 1221,
         "compare": "<="
     },
     "placeopt__design__instance__count__stdcell": {
-        "value": 23278,
+        "value": 21890,
         "compare": "<="
     },
     "detailedplace__design__violations": {
@@ -80,7 +80,7 @@
         "compare": ">="
     },
     "finish__design__instance__area": {
-        "value": 1292,
+        "value": 1274,
         "compare": "<="
     }
 }

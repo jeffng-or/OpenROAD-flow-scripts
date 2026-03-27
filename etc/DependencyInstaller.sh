@@ -10,9 +10,9 @@ else
 fi
 
 # package versions
-klayoutVersion=0.30.3
+klayoutVersion=0.30.7
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    numThreads=$(sysctl -n hw.ncpu)
+    numThreads=$(sysctl -n hw.logicalcpu)
 else
     numThreads=$(nproc)
 fi
@@ -199,8 +199,6 @@ _installUbuntuPackages() {
     # install KLayout
     if  [[ $1 == "rodete" ]]; then
         apt-get -y install --no-install-recommends klayout python3-pandas
-    elif _versionCompare "$1" -ge 23.04; then
-        apt-get -y install --no-install-recommends klayout python3-pandas
     else
         arch=$(uname -m)
         lastDir="$(pwd)"
@@ -221,13 +219,13 @@ _installUbuntuPackages() {
         fi
         else
             if [[ $1 == 20.04 ]]; then
-                klayoutChecksum=e83be08033f2f69d83ab7bd494a7a858
+                klayoutChecksum=e95175a8053d3577375fbd3a7b3d7dbf
             elif [[ $1 == 22.04 ]]; then
-                klayoutChecksum=6e431b0a1a34c16eab9958a2c28f88bd
+                klayoutChecksum=202530d198b0c7b93aa5af0e8e438ccd
             elif [[ $1 == 24.04 ]]; then
-                klayoutChecksum=2d186f0225dbac7ae2d790aa8fa57814
+                klayoutChecksum=145adaa044101bb41179aa63ec6d7f86
             else
-                echo "Unrecognized version of Ubuntu $1. Please install KLayout manually"
+                echo "Unsupported Ubuntu version $1. Supported versions: 20.04, 22.04, 24.04. Please upgrade to a supported LTS release or install KLayout ${klayoutVersion} manually from https://www.klayout.org/build.html"
                 exit 1
             fi
             wget https://www.klayout.org/downloads/Ubuntu-${1%.*}/klayout_${klayoutVersion}-1_amd64.deb
