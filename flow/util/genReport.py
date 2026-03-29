@@ -264,6 +264,7 @@ for log_dir, dirs, files in sorted(os.walk(LOGS_FOLDER, topdown=False)):
     # check if design ran to completion without errors or warnings
     d["log_errors"] = list()
     d["log_warnings"] = list()
+    d["last_log"] = ""
     for name_ in sorted(files):
         temp_e, temp_w = parse_messages(os.path.join(log_dir, name_))
         d["log_errors"] += temp_e
