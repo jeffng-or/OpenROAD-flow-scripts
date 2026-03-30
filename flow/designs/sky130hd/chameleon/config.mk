@@ -34,6 +34,7 @@ export CORE_ASPECT_RATIO      = 1.3
 export CORE_MARGIN            = 2
 
 export chameleon_DIR = $(DESIGN_HOME)/$(PLATFORM)/$(DESIGN_NICKNAME)
+export LEC_AUX_VERILOG_FILES = $(chameleon_DIR)/lec_blackbox_stubs.v
 
 export ADDITIONAL_GDS  = $(chameleon_DIR)/gds/apb_sys_0.gds.gz \
                                $(chameleon_DIR)/gds/DMC_32x16HC.gds.gz \
@@ -50,6 +51,3 @@ export ADDITIONAL_LEFS  = $(chameleon_DIR)/lef/apb_sys_0.lef \
 export FP_PDN_RAIL_WIDTH  = 0.48
 export FP_PDN_RAIL_OFFSET = 0
 export TNS_END_PERCENT    = 100
-
-export LEC_CHECK = 0
-
